@@ -23,7 +23,6 @@
                 android:layout_width="56dp"
                 android:layout_height="56dp"
                 android:src="@drawable/qq_login"
-
                 />
             <TextView
                 android:layout_width="wrap_content"
@@ -31,19 +30,8 @@
                 android:layout_centerHorizontal="true"
                 android:text="QQ登录"
                 android:layout_below="@id/qq_login"
+                android:layout_marginTop="8dp"
                 />
         </RelativeLayout>
     </LinearLayout>
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@id/login_layout"
-        android:layout_centerHorizontal="true"
-        android:text="免注册登录"
-        android:textSize="16dp"
-        android:layout_marginBottom="24dp"
-        />
-
-
-
 </RelativeLayout>
