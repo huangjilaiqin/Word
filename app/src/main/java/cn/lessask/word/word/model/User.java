@@ -12,25 +12,28 @@ public class User extends Response{
     private String nickname;
     private String token;
     private String headimg;
+    private String gender;
 
     public User() {
     }
 
-    public User(int userid, String username, String nickname, String token,String headimg) {
+    public User(int userid, String username, String nickname, String token,String headimg,String gender) {
         this.userid = userid;
         this.username = username;
         this.nickname = nickname;
         this.token = token;
         this.headimg=headimg;
+        this.gender=gender;
     }
 
-    public User(int errno, String error, int userid, String username, String nickname, String token,String headimg) {
+    public User(int errno, String error, int userid, String username, String nickname, String token,String headimg,String gender) {
         super(errno, error);
         this.userid = userid;
         this.username = username;
         this.nickname = nickname;
         this.token = token;
         this.headimg=headimg;
+        this.gender=gender;
     }
 
     @Override
@@ -40,6 +43,7 @@ public class User extends Response{
         dest.writeString(nickname);
         dest.writeString(token);
         dest.writeString(headimg);
+        dest.writeString(gender);
     }
 
     public static final Parcelable.Creator<User> CREATOR
@@ -50,14 +54,23 @@ public class User extends Response{
              String nickname = in.readString();
              String token = in.readString();
              String headimg = in.readString();
+             String gender = in.readString();
 
-             return new User(userid,username,nickname,token,headimg);
+             return new User(userid,username,nickname,token,headimg,gender);
          }
 
          public User[] newArray(int size) {
              return new User[size];
          }
     };
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
 
     public String getHeadimg() {
         return headimg;

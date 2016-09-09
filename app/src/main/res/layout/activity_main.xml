@@ -6,6 +6,16 @@
     android:layout_height="match_parent"
     tools:context="cn.lessask.word.word.MainActivity">
 
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/head_img"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:src="@mipmap/ic_launcher"
+        />
 
     <RelativeLayout
         android:layout_alignParentBottom="true"

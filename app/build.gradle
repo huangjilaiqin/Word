@@ -18,12 +18,26 @@ android {
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
+        manifestPlaceholders = [CHANNEL_VALUE: "pgyer"]
     }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+    }
+    productFlavors{
+        pgyer {}
+        _360 {}
+        baidu {}
+        _91 {}
+        android {}
+        tencent {}
+        mi {}
+        wandoujia {}
+    }
+    productFlavors.all {
+        flavor -> flavor.manifestPlaceholders = [CHANNEL_VALUE: name]
     }
 }
 
@@ -32,6 +46,7 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:23.2.1'
     compile 'com.android.support:palette-v7:23.1.1'
+    compile 'de.hdodenhof:circleimageview:2.0.0'
     compile 'com.github.jakob-grabner:Circle-Progress-View:v1.2.9'
     compile files('libs/open_sdk_r5756_lite.jar')
     compile files('libs/gson-2.3.1.jar')
