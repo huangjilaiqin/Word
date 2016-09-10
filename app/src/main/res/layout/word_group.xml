@@ -7,43 +7,6 @@
     android:background="@color/background_white"
     tools:context="cn.lessask.word.word.WordActivity">
 
-    <TextView
-        android:id="@+id/soeasy"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentRight="true"
-        android:layout_marginRight="16dp"
-        android:layout_marginTop="16dp"
-        android:text="so easy"
-        android:textSize="14dp"
-        android:textColor="@color/grey"
-        android:background="#00000000"
-        android:textAllCaps="false"
-        />
-
-    <TextView
-        android:id="@+id/word"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="46dp"
-        android:textColor="#232323"
-        android:text="hello"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="68dp"
-        />
-    <TextView
-        android:id="@+id/ukphone"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="18dp"
-        android:textColor="#232323"
-        android:text="/hə'ləʊ/"
-        android:layout_centerHorizontal="true"
-        android:layout_below="@+id/word"
-        android:layout_marginTop="0dp"
-        />
-
     <LinearLayout
         android:id="@+id/meanings"
         android:layout_width="match_parent"
@@ -52,6 +15,11 @@
         android:layout_below="@id/ukphone"
         android:layout_marginTop="36dp"
         >
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="80dp">
+
+        </LinearLayout>
         <TextView
             android:id="@+id/mean1"
             android:layout_width="match_parent"
@@ -96,27 +64,6 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
         >
-        <at.grabner.circleprogress.CircleProgressView
-            android:id="@+id/timer"
-            android:layout_centerHorizontal="true"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            CircleProgressView:cpv_barWidth="3dp"
-            CircleProgressView:cpv_rimWidth="3dp"
-            CircleProgressView:cpv_value="0"
-            CircleProgressView:cpv_maxValue="100"
-            CircleProgressView:cpv_barColor="#232323"
-            CircleProgressView:cpv_rimColor="#00000000"
-            CircleProgressView:cpv_textColor="#998877"
-            CircleProgressView:cpv_unitColor="#187854"
-            CircleProgressView:cpv_spinColor="#883366"
-
-            CircleProgressView:cpv_contourSize="0dp"
-            CircleProgressView:cpv_seekMode="true"
-
-            CircleProgressView:cpv_showUnit="false"
-            />
-
         <Button
             android:id="@+id/next"
             android:enabled="false"

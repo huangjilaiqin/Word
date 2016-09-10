@@ -1,5 +1,8 @@
 package cn.lessask.word.word.util;
 
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+
 import cn.lessask.word.word.model.User;
 
 /**
@@ -22,5 +25,8 @@ public class GlobalInfo {
 
     public void setUser(User user) {
         this.user = user;
+    }
+    public SQLiteDatabase getDb(Context context){
+        return DbHelper.getInstance(context).getDb();
     }
 }
