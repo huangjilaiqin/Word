@@ -25,6 +25,7 @@ public class MyApplication extends Application{
         }catch (PackageManager.NameNotFoundException e){
             Log.e(TAG, "getChannel Error:" + e);
         }
+        Constant.setContext(getApplicationContext());
     }
 
     public String getChannel(){

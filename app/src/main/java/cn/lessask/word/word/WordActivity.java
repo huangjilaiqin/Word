@@ -3,12 +3,16 @@ package cn.lessask.word.word;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
+import android.media.MediaPlayer;
+import android.net.Uri;
+import android.os.Parcel;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -18,8 +22,12 @@ import com.android.volley.VolleyError;
 import com.google.gson.reflect.TypeToken;
 import com.tencent.tauth.Tencent;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import at.grabner.circleprogress.CircleProgressView;
@@ -30,6 +38,7 @@ import cn.lessask.word.word.model.User;
 import cn.lessask.word.word.model.Word;
 import cn.lessask.word.word.model.WordList;
 import cn.lessask.word.word.net.GsonRequest;
+import cn.lessask.word.word.net.NetworkFileHelper;
 import cn.lessask.word.word.net.VolleyHelper;
 import cn.lessask.word.word.util.DbHelper;
 import cn.lessask.word.word.util.GlobalInfo;
@@ -38,22 +47,34 @@ public class WordActivity extends AppCompatActivity {
     private String TAG = WordActivity.class.getSimpleName();
     private GlobalInfo globalInfo = GlobalInfo.getInstance();
 
-    View wordLearn,wordRevive,wordRecognize,wordInfo,wordGroupLayout ;
+    View wordLearn,wordReviveLayout,wordRecognize,wordInfoLayout,wordGroupLayout ;
 
     private CircleProgressView timer,learnTimer;
     private LinearLayout meanings;
-    private TextView learnMean1,learnMean2,learnMean3,learnMean4;
-    private TextView learnWord;
     private View nextLayout,selectLayout;
-    private Button next,learnNext;
-    private Button know,unknow,recognizeUnknow;
-    private TextView learnUkphone;
-    private TextView answera,answerb,answerc,answerd;
-    private View answeraItem,answerbItem,answercItem,answerdItem;
+    private Button next;
+    private Button know,unknow;
 
+    //新单词
+    private TextView learnWord,learnUkphone;
+    private TextView learnMean1,learnMean2,learnMean3,learnMean4;
+    private Button learnNext;
+
+    //单词详情
+    private TextView infoWord,infoUkphone;
+    private TextView infoMean1,infoMean2,infoMean3,infoMean4;
+    private ImageView infoVoice;
+
+    //一组单词回顾
     private LinearLayout groupItem1,groupItem2,groupItem3,groupItem4,groupItem5,groupItem6,groupItem7;
     private TextView groupWord1,groupWord2,groupWord3,groupWord4,groupWord5,groupWord6,groupWord7;
     private TextView groupMean1,groupMean2,groupMean3,groupMean4,groupMean5,groupMean6,groupMean7;
+
+    //辨认单词
+    private TextView recognizeWord,recognizeUkphone;
+    private TextView answera,answerb,answerc,answerd;
+    private View answeraItem,answerbItem,answercItem,answerdItem;
+    private int recognizeAnswer;
 
     private int thinkTimes = 3000;
 
@@ -70,9 +91,9 @@ public class WordActivity extends AppCompatActivity {
         //以上两行功能一样
         wordLearn = inflater.inflate(R.layout.word_learn,null);
         initWordLearn();
-        wordRevive = inflater.inflate(R.layout.word_revive, null);
+        wordReviveLayout = inflater.inflate(R.layout.word_revive, null);
         initWordRevive();
-        wordInfo = inflater.inflate(R.layout.word_info, null);
+        wordInfoLayout = inflater.inflate(R.layout.word_info, null);
         initWordInfo();
         wordRecognize = inflater.inflate(R.layout.word_recognize, null);
         initWordRecognize();
@@ -88,12 +109,35 @@ public class WordActivity extends AppCompatActivity {
     private void gotoLean(){
         learnWords=getGroupOfWords(user.getUserid(),1);
 
+        Log.e(TAG, "notSyncWords :"+notSyncWords.toString());
         if(notSyncWords.length()>0){
             downloadWords(user.getUserid(),user.getToken(),1,notSyncWords.toString());
             notSyncWords.delete(0,notSyncWords.length());
-            Log.e(TAG, "notSyncWords size:"+notSyncWords.length());
         }else {
             showWord();
+            Log.e(TAG, "gotoLearn");
+        }
+    }
+
+    private boolean showWord(){
+        if(learnIndex<learnWords.size()){
+            Word word = learnWords.get(learnIndex);
+            learnIndex++;
+            int status = word.getStatus();
+            switch (status){
+                case 0:
+                    setWordLearnLayout(word);
+                    break;
+                case 1:
+                    setWordRecognizeLayout(word);
+                    break;
+            }
+            return true;
+        }else{
+            //回顾当前批次的单词
+            setWordGroupLayout(learnWords);
+            learnIndex=0;
+            return false;
         }
     }
 
@@ -129,10 +173,10 @@ public class WordActivity extends AppCompatActivity {
                         values.put("sentence",word.getSentence());
                         String where = "userid=? and id=?";
                         String[] whereArgs = new String[]{""+userid,""+word.getId()};
-                        GlobalInfo.getInstance().getDb(WordActivity.this).update("t_words",values,where,whereArgs);
+                        globalInfo.getDb(WordActivity.this).update("t_words",values,where,whereArgs);
 
                         for(int j=0;j<learnWords.size();j++){
-                            Word w = learnWords.get(i);
+                            Word w = learnWords.get(j);
                             if(w.getId()==word.getId()){
                                 w.setUsphone(word.getUsphone());
                                 w.setUkphone(word.getUkphone());
@@ -143,6 +187,7 @@ public class WordActivity extends AppCompatActivity {
                     }
                 }
                 showWord();
+                Log.e(TAG, "downloadWords");
             }
 
             @Override
@@ -162,26 +207,13 @@ public class WordActivity extends AppCompatActivity {
 
     }
 
-    private void showWord(){
-        if(learnIndex<learnWords.size()){
-            Word word = learnWords.get(learnIndex);
-            learnIndex++;
-            int status = word.getStatus();
-            switch (status){
-                case 0:
-                    setWordLearnLayout(word);
-                    break;
-            }
-        }else{
-            //回顾当前批次的单词
-            setWordGroupLayout(learnWords);
-            learnIndex=0;
-        }
-    }
+
 
     private ArrayList<Word> getGroupOfWords(int userid,int wtype){
+        Log.e(TAG,"getGroupOfWords");
         ArrayList<Word> words = new ArrayList<>();
-        String reviewSql = "select id,word,usphone,ukphone,mean,sentence,status from t_words where userid=? and wtype=? and review>date('now') order by review desc limit 7";
+        //String reviewSql = "select id,word,usphone,ukphone,mean,sentence,status,review,date('now') from t_words where userid=? and wtype=? and review>date('now') order by review desc limit 7";
+        String reviewSql = "select id,word,usphone,ukphone,mean,sentence,status,review,strftime('%s','now','localtime') from t_words where userid=? and wtype=? and status<2 order by review desc limit 7";
         Cursor cursor = globalInfo.getDb(WordActivity.this).rawQuery(reviewSql,new String[]{""+userid,""+wtype});
         while (cursor.moveToNext()){
             int id =cursor.getInt(0);
@@ -191,7 +223,10 @@ public class WordActivity extends AppCompatActivity {
             String mean =cursor.getString(4);
             String sentence =cursor.getString(5);
             int status =cursor.getInt(6);
+            Date review = new Date(cursor.getLong(7)*1000);
+            //Log.e(TAG, wordStr+", review:"+review+", now:"+cursor.getLong(8));
 
+            Log.e(TAG, wordStr+", us:"+usphone+", uk:"+ukphone+", mean:"+mean);
             if(usphone.length()==0 && ukphone.length()==0 && mean.length()==0) {
                 if(notSyncWords.length()>0)
                     notSyncWords.append(","+wordStr);
@@ -226,13 +261,17 @@ public class WordActivity extends AppCompatActivity {
                 words.add(word);
             }
         }
+        /*
         for(int i=0;i<words.size();i++){
-            Log.e(TAG, words.get(i).getWord());
+            Log.e(TAG, "word:"+words.get(i).getWord()+", "+words.get(i).getReview());
         }
+        */
         return words;
     }
 
     private void initWordRecognize(){
+        recognizeWord=(TextView)wordRecognize.findViewById(R.id.word);
+        recognizeUkphone=(TextView)wordRecognize.findViewById(R.id.ukphone);
         answera = (TextView)wordRecognize.findViewById(R.id.answera);
         answerb = (TextView)wordRecognize.findViewById(R.id.answerb);
         answerc = (TextView)wordRecognize.findViewById(R.id.answerc);
@@ -243,45 +282,146 @@ public class WordActivity extends AppCompatActivity {
         answercItem  = wordRecognize.findViewById(R.id.answerc_item);
         answerdItem  = wordRecognize.findViewById(R.id.answerd_item);
 
-        wordRecognize.findViewById(R.id.answera_item).setOnClickListener(selectAnswer);
+        answeraItem.setOnClickListener(selectAnswer);
+        answerbItem.setOnClickListener(selectAnswer);
+        answercItem.setOnClickListener(selectAnswer);
+        answerdItem.setOnClickListener(selectAnswer);
+        //点击不知道
         wordRecognize.findViewById(R.id.unknow).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setWordInfoLayout();
+                //setWordInfoLayout();
+                setWordStatus(user.getUserid(),learnWords.get(learnIndex-1),-1);
+                setWordInfoLayout(learnWords.get(learnIndex-1));
             }
         });
     }
 
     private View.OnClickListener selectAnswer = new View.OnClickListener() {
+
         @Override
         public void onClick(View v) {
+            TextView answerItem=null;
+            boolean isRight=false;
             if(v==answeraItem){
-                if(false){
-                    answera.setTextColor(getResources().getColor(R.color.red));
-                    setWordInfoLayout();
-                }else{
-                    //对了
-                    answera.setTextColor(getResources().getColor(R.color.red));
-                }
+                answerItem=answera;
+                if(recognizeAnswer==0)
+                    isRight=true;
             }else if(v==answerbItem){
-
+                answerItem=answerb;
+                if(recognizeAnswer==1)
+                    isRight=true;
             }else if(v==answercItem){
-
+                answerItem=answerc;
+                if(recognizeAnswer==2)
+                    isRight=true;
             }else if(v==answerdItem){
-
+                answerItem=answerd;
+                if(recognizeAnswer==3)
+                    isRight=true;
+            }
+            Word word=learnWords.get(learnIndex-1);
+            if(isRight){
+                answerItem.setTextColor(getResources().getColor(R.color.hublue));
+                setWordStatus(user.getUserid(),word,1);
+                showWord();
+            }else{
+                //错了
+                answerItem.setTextColor(getResources().getColor(R.color.red));
+                setWordStatus(user.getUserid(),word,-1);
+                setWordInfoLayout(word);
             }
         }
     };
 
+    private void setWordRecognizeLayout(Word word){
+        recognizeWord.setText(word.getWord());
+        recognizeUkphone.setText("/"+word.getUkphone()+"/");
+        TextView[] answerItems = new TextView[]{answera,answerb,answerc,answerd};
+        //获取用于混淆的三个单词的意思
+        recognizeAnswer=(int)(Math.random()*4);
+        Log.e(TAG, "recognizeAnswer:"+recognizeAnswer);
+        ArrayList<String> errorAnswers = getErrorAnswers();
+
+        TextView answerItem=null;
+        for(int i=0,errorI=0;i<4;i++){
+            answerItem=answerItems[i];
+            answerItem.setTextColor(getResources().getColor(R.color.black));
+            if(i==recognizeAnswer){
+                answerItem.setText(word.getMean().replace("#", " "));
+            }else {
+                answerItem.setText(errorAnswers.get(errorI++).replace("#", " "));
+            }
+        }
+
+        setContentView(wordRecognize);
+
+    }
+
+    private ArrayList<String> getErrorAnswers(){
+        ArrayList<String> answers = new ArrayList<>();
+        answers.add("adj. 快乐的");
+        answers.add("adj. 沮丧的");
+        answers.add("n. 健身器材");
+        return answers;
+    }
+
     private void initWordInfo(){
-        nextLayout=wordInfo.findViewById(R.id.next_layout);
-        next = (Button)wordInfo.findViewById(R.id.next);
-        next.setOnClickListener(new View.OnClickListener() {
+        infoWord=(TextView)wordInfoLayout.findViewById(R.id.word);
+        infoUkphone=(TextView)wordInfoLayout.findViewById(R.id.ukphone);
+        wordInfoLayout.findViewById(R.id.voice).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //setWordInfoLayout();
+                Word word = learnWords.get(learnIndex-1);
+                playPhoneFile(word.getWord(),"uk");
             }
         });
+        infoMean1=(TextView)wordInfoLayout.findViewById(R.id.mean1);
+        infoMean2=(TextView)wordInfoLayout.findViewById(R.id.mean2);
+        infoMean3=(TextView)wordInfoLayout.findViewById(R.id.mean3);
+        infoMean4=(TextView)wordInfoLayout.findViewById(R.id.mean4);
+
+        wordInfoLayout.findViewById(R.id.next).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showWord();
+            }
+        });
+    }
+
+    private void setWordInfoLayout(Word word){
+        infoWord.setText(word.getWord());
+        infoUkphone.setText("/"+word.getUkphone()+"/");
+
+        String[] means = word.getMean().split("#");
+        int size = means.length;
+        switch (size){
+            case 1:
+                infoMean1.setText(means[0]);
+                infoMean2.setText("");
+                infoMean3.setText("");
+                infoMean4.setText("");
+                break;
+            case 2:
+                infoMean1.setText(means[0]);
+                infoMean2.setText(means[1]);
+                infoMean3.setText("");
+                infoMean4.setText("");
+                break;
+            case 3:
+                infoMean1.setText(means[0]);
+                infoMean2.setText(means[1]);
+                infoMean3.setText(means[2]);
+                infoMean4.setText("");
+                break;
+            case 4:
+                infoMean1.setText(means[0]);
+                infoMean2.setText(means[1]);
+                infoMean3.setText(means[2]);
+                infoMean4.setText(means[3]);
+                break;
+        }
+        setContentView(wordInfoLayout);
     }
 
     private void initWordLearn(){
@@ -291,6 +431,8 @@ public class WordActivity extends AppCompatActivity {
         learnNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if(learnIndex<=learnWords.size())
+                    setWordStatus(user.getUserid(), learnWords.get(learnIndex-1), 1);
                 showWord();
             }
         });
@@ -357,24 +499,24 @@ public class WordActivity extends AppCompatActivity {
 
 
     private void initWordRevive(){
-        selectLayout=wordRevive.findViewById(R.id.select_layout);
-        know = (Button)wordRevive.findViewById(R.id.know);
+        selectLayout=wordReviveLayout.findViewById(R.id.select_layout);
+        know = (Button)wordReviveLayout.findViewById(R.id.know);
         know.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setWordInfoLayout();
+                //setWordInfoLayout();
             }
         });
-        unknow = (Button)wordRevive.findViewById(R.id.unknow);
+        unknow = (Button)wordReviveLayout.findViewById(R.id.unknow);
         unknow.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setWordInfoLayout();
+                //setWordInfoLayout();
             }
         });
 
-        meanings = (LinearLayout)wordRevive.findViewById(R.id.meanings);
-        timer = (CircleProgressView) wordRevive.findViewById(R.id.timer);
+        meanings = (LinearLayout)wordReviveLayout.findViewById(R.id.meanings);
+        timer = (CircleProgressView) wordReviveLayout.findViewById(R.id.timer);
         timer.setValueAnimated(100, thinkTimes);
         timer.setSeekModeEnabled(false);
         timer.setTextMode(TextMode.TEXT);
@@ -393,19 +535,12 @@ public class WordActivity extends AppCompatActivity {
                         meanings.setVisibility(View.VISIBLE);
                     }
                 }, thinkTimes + 200);
-        setContentView(wordRevive);
+        setContentView(wordReviveLayout);
     }
 
-    private void setWordInfoLayout(){
-        //这是单词信息
-        setContentView(wordInfo);
-    }
 
-    private void setWordRecognizeLayout(){
 
-        setContentView(wordRecognize);
 
-    }
 
     private void setWordGroupLayout(ArrayList<Word> learnWords){
         int size=learnWords.size();
@@ -456,6 +591,75 @@ public class WordActivity extends AppCompatActivity {
         groupMean6=(TextView)wordGroupLayout.findViewById(R.id.mean6);
         groupMean7=(TextView)wordGroupLayout.findViewById(R.id.mean7);
 
+    }
+
+    private void setWordStatus(int userid,Word word,int step){
+        int id = word.getId();
+        int status = word.getStatus();
+        status+=step;
+        Date now = new Date();
+        Date review = new Date(now.getTime()+1*60*1000);
+
+        ContentValues values = new ContentValues();
+        values.put("status",status);
+        values.put("review",review.getTime()/1000);
+        String where = "userid=? and id=?";
+        String[] whereArgs = new String[]{""+userid,""+word.getId()};
+        globalInfo.getDb(WordActivity.this).update("t_words",values,where,whereArgs);
+        Log.e(TAG, "setWordStatus update:"+word.getWord());
+
+        /*
+        Cursor cursor = globalInfo.getDb(WordActivity.this).rawQuery("select review,status,word from t_words where review is not null",null);
+        while (cursor.moveToNext()){
+            Log.e(TAG, "setWordStatus:"+cursor.getString(0)+","+cursor.getString(1)+","+cursor.getString(2));
+        }
+        */
+    }
+
+    //type: 1英式发音，2美式发音
+    private void playPhoneFile(String word,String type){
+        String url = "http://120.24.75.92:5006/word/downloadphone?word="+word+"&type="+type;
+        String filename=word+"_"+type+".mp3";
+        File phoneFile = new File(Constant.phonePrefixPath,filename);
+        if(phoneFile.exists()){
+            playMp3(phoneFile.getPath());
+        }else {
+            final String path = phoneFile.getPath();
+            NetworkFileHelper.getInstance().startGetFile(url, path, new NetworkFileHelper.GetFileRequest() {
+                @Override
+                public void onStart() {
+
+                }
+
+                @Override
+                public void onResponse(String error) {
+                    File file = new File(path);
+                    if (file.exists()) {
+                        Log.e(TAG, "exists:" + path);
+                    } else {
+                        Log.e(TAG, "not exists:" + path);
+                    }
+                    playMp3(path);
+                }
+
+                @Override
+                public void onError(String error) {
+                    Toast.makeText(WordActivity.this, "getphone error" + error, Toast.LENGTH_LONG).show();
+                    Log.e(TAG, error);
+                }
+            });
+        }
+    }
+    private void playMp3(String path){
+
+        MediaPlayer mp = new MediaPlayer();
+        try {
+            mp.setDataSource(path);
+            mp.prepare();
+            mp.start();
+        }catch (IOException e){
+            Log.e(TAG, "playMp3 error:"+e);
+        }
     }
 }
 

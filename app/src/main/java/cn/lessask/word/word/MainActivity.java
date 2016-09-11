@@ -40,6 +40,9 @@ public class MainActivity extends AppCompatActivity {
     private final int LOGIN=1;
     private CircleImageView headImg;
 
+    private GlobalInfo globalInfo=GlobalInfo.getInstance();
+    private boolean isInitDb=false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -95,10 +98,14 @@ public class MainActivity extends AppCompatActivity {
                 loadUserInfo(userid,token);
             }else{
                 User user = new User(userid,"",nickname,token,headimg,gender);
-                GlobalInfo.getInstance().setUser(user);
+                globalInfo.setUser(user);
                 loadHeadImg(user.getHeadimg());
 
-                //changeList(userid,token,0,1);
+                if(isInitDb) {
+                    Toast.makeText(MainActivity.this,"changeList",Toast.LENGTH_SHORT).show();
+                    changeList(userid,token,0,1);
+                    isInitDb=false;
+                }
             }
         }
     }
@@ -118,19 +125,26 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }else {
                     //本地存储
-                    String wordsStr = user.getWords();
-                    String[] words = wordsStr.split(";");
-                    for(int i=0,size=words.length;i<size;i++){
-                        String[] info = words[i].split(":");
-                        ContentValues values = new ContentValues();
-                        values.put("id",info[0]);
-                        values.put("word",info[1]);
-                        values.put("userid",userid);
-                        values.put("wtype",wtype);
-                        GlobalInfo.getInstance().getDb(MainActivity.this).insert("t_words",null,values);
-                    }
+                    final String wordsStr = user.getWords();
+                    final String[] words = wordsStr.split(";");
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            for(int i=0,size=words.length;i<size;i++){
+                                String[] info = words[i].split(":");
+                                ContentValues values = new ContentValues();
+                                values.put("id",info[0]);
+                                values.put("word",info[1]);
+                                values.put("userid",userid);
+                                values.put("wtype",wtype);
+                                globalInfo.getDb(MainActivity.this).insert("t_words",null,values);
+                            }
+                            Log.e(TAG, "insert done");
+                        }
+                    }).start();
+
                 }
-                Cursor cursor = GlobalInfo.getInstance().getDb(MainActivity.this).rawQuery("select count(id) as num from t_words",null);
+                Cursor cursor = globalInfo.getDb(MainActivity.this).rawQuery("select count(id) as num from t_words",null);
                 while (cursor.moveToNext()){
                     int num=cursor.getInt(0);
                     Log.e(TAG, "size:"+num);
@@ -169,7 +183,7 @@ public class MainActivity extends AppCompatActivity {
                 }else {
                     //本地存储
                     storageUser(user);
-                    GlobalInfo.getInstance().setUser(user);
+                    globalInfo.setUser(user);
                     loadHeadImg(user.getHeadimg());
                 }
             }
@@ -207,16 +221,19 @@ public class MainActivity extends AppCompatActivity {
     private void initDb(SharedPreferences baseInfo){
         SharedPreferences.Editor editor = baseInfo.edit();
         //初始化数据库
-        SQLiteDatabase db = GlobalInfo.getInstance().getDb(getApplicationContext());
+        SQLiteDatabase db = globalInfo.getDb(getApplicationContext());
 
         Log.e(TAG, "create db begin");
-        db.execSQL("drop table t_words");
-        db.execSQL("create table t_words(`id` INTEGER primary key,`userid` INTEGER not null,`wtype` integer not null,`word` text not null,`usphone` text,`ukphone` text,mean text,sentence text,`review` TIMESTAMP,`status` tinyint not null default 0,`sync` tinyint not null default 1)");
+        //db.execSQL("drop table t_words");
+        db.execSQL("create table t_words(`id` INTEGER primary key,`userid` INTEGER not null,`wtype` integer not null,`word` text not null,`usphone` text default '',`ukphone` text default '',mean text default '',sentence text default '',`review` TIMESTAMP,`status` tinyint not null default 0,`sync` tinyint not null default 1)");
 
         Log.e(TAG, "create db end");
 
         editor.putBoolean("initDb", true);
         editor.commit();
+        isInitDb=true;
+        Toast.makeText(MainActivity.this,"initDb",Toast.LENGTH_SHORT).show();
+
     }
 
     @Override
@@ -230,7 +247,14 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this,user.getNickname(),Toast.LENGTH_LONG).show();
                     Log.e(TAG, "onActivityResult userid:" + user.getUserid() + ", nickname:" + user.getNickname());
 
+                    storageUser(user);
+                    globalInfo.setUser(user);
                     loadHeadImg(user.getHeadimg());
+                    if(isInitDb) {
+                        Toast.makeText(MainActivity.this,"changeList",Toast.LENGTH_SHORT).show();
+                        changeList(user.getUserid(),user.getToken(),0,1);
+                        isInitDb=false;
+                    }
                     break;
             }
         }
