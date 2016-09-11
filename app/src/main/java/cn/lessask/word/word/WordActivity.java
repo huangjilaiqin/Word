@@ -38,7 +38,7 @@ public class WordActivity extends AppCompatActivity {
     private String TAG = WordActivity.class.getSimpleName();
     private GlobalInfo globalInfo = GlobalInfo.getInstance();
 
-    View wordLearn,wordRevive,wordRecognize,wordInfo;
+    View wordLearn,wordRevive,wordRecognize,wordInfo,wordGroupLayout ;
 
     private CircleProgressView timer,learnTimer;
     private LinearLayout meanings;
@@ -50,11 +50,18 @@ public class WordActivity extends AppCompatActivity {
     private TextView learnUkphone;
     private TextView answera,answerb,answerc,answerd;
     private View answeraItem,answerbItem,answercItem,answerdItem;
+
+    private LinearLayout groupItem1,groupItem2,groupItem3,groupItem4,groupItem5,groupItem6,groupItem7;
+    private TextView groupWord1,groupWord2,groupWord3,groupWord4,groupWord5,groupWord6,groupWord7;
+    private TextView groupMean1,groupMean2,groupMean3,groupMean4,groupMean5,groupMean6,groupMean7;
+
     private int thinkTimes = 3000;
 
     private ArrayList<Word> learnWords;
     private StringBuilder notSyncWords=new StringBuilder();
     private int learnIndex=0;
+
+    private User user;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,7 +77,15 @@ public class WordActivity extends AppCompatActivity {
         wordRecognize = inflater.inflate(R.layout.word_recognize, null);
         initWordRecognize();
 
-        User user = globalInfo.getUser();
+
+        wordGroupLayout = inflater.inflate(R.layout.word_group, null);
+        initWordGroup();
+
+        user = globalInfo.getUser();
+        gotoLean();
+    }
+
+    private void gotoLean(){
         learnWords=getGroupOfWords(user.getUserid(),1);
 
         if(notSyncWords.length()>0){
@@ -159,6 +174,8 @@ public class WordActivity extends AppCompatActivity {
             }
         }else{
             //回顾当前批次的单词
+            setWordGroupLayout(learnWords);
+            learnIndex=0;
         }
     }
 
@@ -282,26 +299,26 @@ public class WordActivity extends AppCompatActivity {
         learnMean2=(TextView)wordLearn.findViewById(R.id.mean2);
         learnMean3=(TextView)wordLearn.findViewById(R.id.mean3);
         learnMean4=(TextView)wordLearn.findViewById(R.id.mean4);
-        learnTimer = (CircleProgressView) wordLearn.findViewById(R.id.timer);
-        learnTimer.setValueAnimated(100, thinkTimes);
-        learnTimer.setSeekModeEnabled(false);
-        learnTimer.setTextMode(TextMode.TEXT);
-        learnTimer.setText("");
-        learnTimer.setSpinSpeed(1);
+        //learnTimer = (CircleProgressView) wordLearn.findViewById(R.id.timer);
+        //learnTimer.setValueAnimated(100, thinkTimes);
+        //learnTimer.setSeekModeEnabled(false);
+        //learnTimer.setTextMode(TextMode.TEXT);
+        //learnTimer.setText("");
+        //learnTimer.setSpinSpeed(1);
     }
 
     private void setWordLearnLayout(Word word){
         //新单词必须停留一定时间才能跳过
-        learnTimer.clearAnimation();
-        learnTimer.setValueAnimated(0,100, thinkTimes);
-        learnNext.setEnabled(false);
-        new android.os.Handler().postDelayed(
-            new Runnable() {
-                public void run() {
-                    learnNext.setEnabled(true);
-                }
-            }, thinkTimes + 200);
-        setContentView(wordLearn);
+        //learnTimer.clearAnimation();
+        //learnTimer.setValueAnimated(0,100, thinkTimes);
+        //learnNext.setEnabled(false);
+        //new android.os.Handler().postDelayed(
+        //    new Runnable() {
+        //        public void run() {
+        //            learnNext.setEnabled(true);
+        //        }
+        //    }, thinkTimes + 200);
+
         //设置数据
         learnWord.setText(word.getWord());
 
@@ -335,6 +352,7 @@ public class WordActivity extends AppCompatActivity {
                 learnMean4.setText(means[3]);
                 break;
         }
+        setContentView(wordLearn);
     }
 
 
@@ -386,6 +404,58 @@ public class WordActivity extends AppCompatActivity {
     private void setWordRecognizeLayout(){
 
         setContentView(wordRecognize);
+
+    }
+
+    private void setWordGroupLayout(ArrayList<Word> learnWords){
+        int size=learnWords.size();
+        LinearLayout[] items = new LinearLayout[]{groupItem1,groupItem2,groupItem3,groupItem4,groupItem5,groupItem6,groupItem7};
+        TextView[] words = new TextView[]{groupWord1,groupWord2,groupWord3,groupWord4,groupWord5,groupWord6,groupWord7};
+        TextView[] means = new TextView[]{groupMean1,groupMean2,groupMean3,groupMean4,groupMean5,groupMean6,groupMean7};
+        for(int i=0,wordsSize=learnWords.size(),length=items.length;i<length;i++){
+            if(i<wordsSize){
+                items[i].setVisibility(View.VISIBLE);
+                Word w = learnWords.get(i);
+                words[i].setText(w.getWord());
+                means[i].setText(w.getMean().replace("#", "\n"));
+            }else {
+                items[i].setVisibility(View.INVISIBLE);
+            }
+        }
+
+        setContentView(wordGroupLayout);
+    }
+    private  void initWordGroup(){
+        wordGroupLayout.findViewById(R.id.next).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                gotoLean();
+            }
+        });
+        groupItem1=(LinearLayout)wordGroupLayout.findViewById(R.id.item1);
+        groupItem2=(LinearLayout)wordGroupLayout.findViewById(R.id.item2);
+        groupItem3=(LinearLayout)wordGroupLayout.findViewById(R.id.item3);
+        groupItem4=(LinearLayout)wordGroupLayout.findViewById(R.id.item4);
+        groupItem5=(LinearLayout)wordGroupLayout.findViewById(R.id.item5);
+        groupItem6=(LinearLayout)wordGroupLayout.findViewById(R.id.item6);
+        groupItem7=(LinearLayout)wordGroupLayout.findViewById(R.id.item7);
+
+        groupWord1=(TextView)wordGroupLayout.findViewById(R.id.word1);
+        groupWord2=(TextView)wordGroupLayout.findViewById(R.id.word2);
+        groupWord3=(TextView)wordGroupLayout.findViewById(R.id.word3);
+        groupWord4=(TextView)wordGroupLayout.findViewById(R.id.word4);
+        groupWord5=(TextView)wordGroupLayout.findViewById(R.id.word5);
+        groupWord6=(TextView)wordGroupLayout.findViewById(R.id.word6);
+        groupWord7=(TextView)wordGroupLayout.findViewById(R.id.word7);
+
+        groupMean1=(TextView)wordGroupLayout.findViewById(R.id.mean1);
+        groupMean2=(TextView)wordGroupLayout.findViewById(R.id.mean2);
+        groupMean3=(TextView)wordGroupLayout.findViewById(R.id.mean3);
+        groupMean4=(TextView)wordGroupLayout.findViewById(R.id.mean4);
+        groupMean5=(TextView)wordGroupLayout.findViewById(R.id.mean5);
+        groupMean6=(TextView)wordGroupLayout.findViewById(R.id.mean6);
+        groupMean7=(TextView)wordGroupLayout.findViewById(R.id.mean7);
+
     }
 }
 

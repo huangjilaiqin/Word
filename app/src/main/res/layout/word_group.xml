@@ -1,61 +1,228 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:CircleProgressView="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_white"
+    android:orientation="vertical"
     tools:context="cn.lessask.word.word.WordActivity">
 
-    <LinearLayout
-        android:id="@+id/meanings"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_below="@id/ukphone"
-        android:layout_marginTop="36dp"
+        android:layout_weight="1"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
         >
         <LinearLayout
+            android:id="@+id/meanings"
             android:layout_width="match_parent"
-            android:layout_height="80dp">
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp"
+            >
+            <LinearLayout
+                android:id="@+id/item1"
+                android:background="@color/background_grey"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingTop="8dp"
+                android:paddingLeft="16dp"
+                android:paddingBottom="8dp"
+                >
+                <TextView
+                    android:id="@+id/word1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="abandon"
+                    android:textColor="@color/word_color"
+                    android:textSize="@dimen/word_group_word_size"
+                    />
+                <TextView
+                    android:id="@+id/mean1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textSize="@dimen/word_group_mean_size"
+                    android:text="n.放任；狂热,vt. 遗弃；放弃"
+                    />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/item2"
+                android:background="@color/background_grey"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="2dp"
+                android:paddingTop="8dp"
+                android:paddingLeft="16dp"
+                android:paddingBottom="8dp"
+                >
+                <TextView
+                    android:id="@+id/word2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/word_color"
+                    android:textSize="@dimen/word_group_word_size"
+                    android:text="abandon"
+                    />
+                <TextView
+                    android:id="@+id/mean2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textSize="@dimen/word_group_mean_size"
+                    android:text="n.放任；狂热,vt. 遗弃；放弃"
+                    />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/item3"
+                android:background="@color/background_grey"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="2dp"
+                android:paddingTop="8dp"
+                android:paddingLeft="16dp"
+                android:paddingBottom="8dp"
+                >
+                <TextView
+                    android:id="@+id/word3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/word_color"
+                    android:textSize="@dimen/word_group_word_size"
+                    android:text="abandon"
+                    />
+                <TextView
+                    android:id="@+id/mean3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textSize="@dimen/word_group_mean_size"
+                    android:text="n.放任；狂热,vt. 遗弃；放弃"
+                    />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/item4"
+                android:background="@color/background_grey"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="2dp"
+                android:paddingTop="8dp"
+                android:paddingLeft="16dp"
+                android:paddingBottom="8dp"
+                >
+                <TextView
+                    android:id="@+id/word4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/word_color"
+                    android:textSize="@dimen/word_group_word_size"
+                    android:text="abandon"
+                    />
+                <TextView
+                    android:id="@+id/mean4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textSize="@dimen/word_group_mean_size"
+                    android:text="n.放任；狂热,vt. 遗弃；放弃"
+                    />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/item5"
+                android:background="@color/background_grey"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="2dp"
+                android:paddingTop="8dp"
+                android:paddingLeft="16dp"
+                android:paddingBottom="8dp"
+                >
+                <TextView
+                    android:id="@+id/word5"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/word_color"
+                    android:textSize="@dimen/word_group_word_size"
+                    android:text="abandon"
+                    />
+                <TextView
+                    android:id="@+id/mean5"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textSize="@dimen/word_group_mean_size"
+                    android:text="n.放任；狂热,vt. 遗弃；放弃"
+                    />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/item6"
+                android:background="@color/background_grey"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="2dp"
+                android:paddingTop="8dp"
+                android:paddingLeft="16dp"
+                android:paddingBottom="8dp"
+                >
+                <TextView
+                    android:id="@+id/word6"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/word_color"
+                    android:textSize="@dimen/word_group_word_size"
+                    android:text="abandon"
+                    />
+                <TextView
+                    android:id="@+id/mean6"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textSize="@dimen/word_group_mean_size"
+                    android:text="n.放任；狂热,vt. 遗弃；放弃"
+                    />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/item7"
+                android:background="@color/background_grey"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="2dp"
+                android:paddingTop="8dp"
+                android:paddingLeft="16dp"
+                android:paddingBottom="8dp"
+                >
+                <TextView
+                    android:id="@+id/word7"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/word_color"
+                    android:textSize="@dimen/word_group_word_size"
+                    android:text="abandon"
+                    />
+                <TextView
+                    android:id="@+id/mean7"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textSize="@dimen/word_group_mean_size"
+                    android:text="n.放任；狂热,vt. 遗弃；放弃"
+                    />
+            </LinearLayout>
+
 
         </LinearLayout>
-        <TextView
-            android:id="@+id/mean1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="@dimen/mean_size"
-            android:textAlignment="center"
-            android:text="n. 你好"
-            />
-        <TextView
-            android:id="@+id/mean2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="@dimen/mean_size"
-            android:textAlignment="center"
-            android:layout_marginTop="5dp"
-            android:text="n. 你好"
-            />
-        <TextView
-            android:id="@+id/mean3"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="@dimen/mean_size"
-            android:layout_marginTop="5dp"
-            android:textAlignment="center"
-            android:text="n. 你好"
-            />
-        <TextView
-            android:id="@+id/mean4"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="@dimen/mean_size"
-            android:layout_marginTop="5dp"
-            android:textAlignment="center"
-            android:text="n. 你好"
-            />
-    </LinearLayout>
+
+    </ScrollView>
+
 
     <RelativeLayout
         android:id="@+id/next_layout"
@@ -66,18 +233,16 @@
         >
         <Button
             android:id="@+id/next"
-            android:enabled="false"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
             android:layout_marginLeft="16dp"
             android:layout_marginRight="16dp"
-            android:layout_below="@id/timer"
             android:layout_marginTop="16dp"
             android:background="@drawable/btn_bg"
             android:text="Next"
             android:textAllCaps="false"
             />
     </RelativeLayout>
-</RelativeLayout>
+</LinearLayout>
 
