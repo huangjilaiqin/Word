@@ -26,6 +26,8 @@ import org.json.JSONObject;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import cn.lessask.word.word.model.Response;
 import cn.lessask.word.word.model.User;
@@ -52,6 +54,30 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, WordActivity.class);
                 startActivity(intent);
+            }
+        });
+
+        final SiriView siriView = (SiriView)findViewById(R.id.siriView);
+        // 设置曲线高度，height的取值是0f~1f
+        siriView.setWaveHeight(0f);
+        // 设置曲线的粗细，width的取值大于0f
+        siriView.setWaveWidth(5f);
+        // 设置曲线颜色
+        siriView.setWaveColor(Color.rgb(39, 188, 136));
+        // 设置曲线在X轴上的偏移量，默认值为0f
+        siriView.setWaveOffsetX(0f);
+        // 设置曲线的数量，默认是4
+        siriView.setWaveAmount(4);
+        // 设置曲线的速度，默认是0.1f
+        siriView.setWaveSpeed(0.1f);
+
+        siriView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(siriView.isActive())
+                    siriView.stop();
+                else
+                    siriView.start();
             }
         });
 
