@@ -341,16 +341,16 @@ public class WordActivity extends AppCompatActivity {
         //获取用于混淆的三个单词的意思
         recognizeAnswer=(int)(Math.random()*4);
         Log.e(TAG, "recognizeAnswer:"+recognizeAnswer);
-        ArrayList<String> errorAnswers = getErrorAnswers();
+        ArrayList<String> errorAnswers = getErrorAnswers(word.getId());
 
         TextView answerItem=null;
         for(int i=0,errorI=0;i<4;i++){
             answerItem=answerItems[i];
             answerItem.setTextColor(getResources().getColor(R.color.black));
             if(i==recognizeAnswer){
-                answerItem.setText(word.getMean().replace("#", " "));
+                answerItem.setText(getFirstMean(word.getMean()));
             }else {
-                answerItem.setText(errorAnswers.get(errorI++).replace("#", " "));
+                answerItem.setText(errorAnswers.get(errorI++));
             }
         }
 
@@ -358,12 +358,39 @@ public class WordActivity extends AppCompatActivity {
 
     }
 
-    private ArrayList<String> getErrorAnswers(){
+    private ArrayList<String> getErrorAnswers(int id){
         ArrayList<String> answers = new ArrayList<>();
-        answers.add("adj. 快乐的");
-        answers.add("adj. 沮丧的");
-        answers.add("n. 健身器材");
+
+        int minId = id-15;
+        Cursor cursor = globalInfo.getDb(WordActivity.this).rawQuery("select mean from t_words where id<? and id>? order by random()",new String[]{""+id,""+minId});
+        int count = cursor.getCount();
+        if(count>=3){
+            for(int i=0;i<3;i++){
+                cursor.moveToNext();
+                answers.add(getFirstMean(cursor.getString(0)));
+            }
+        }else{
+            while(cursor.moveToNext())
+                answers.add(getFirstMean(cursor.getString(0)));
+            if(count==0){
+                answers.add("adj. 外部的");
+                answers.add("n. 建筑物，大楼");
+                answers.add("vi. 聚焦");
+            }else if(count==1){
+                answers.add("n. 悬崖,峭壁");
+                answers.add("n. 邮费，邮资");
+            }else if(count==2){
+                answers.add("vt. 陈列，展览");
+            }
+        }
         return answers;
+    }
+
+    private String getFirstMean(String mean){
+        int lastIndex = mean.indexOf("#");
+        if(lastIndex==-1)
+            lastIndex=mean.length();
+        return mean.substring(0,lastIndex);
     }
 
     private void initWordInfo(){

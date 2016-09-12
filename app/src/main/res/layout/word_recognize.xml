@@ -26,11 +26,11 @@
         android:id="@+id/word"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="36dp"
+        android:textSize="@dimen/word_size"
         android:textColor="#232323"
         android:text="hello"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="68dp"
+        android:layout_marginTop="24dp"
         />
     <TextView
         android:id="@+id/ukphone"
@@ -77,8 +77,7 @@
                 android:layout_centerVertical="true"
                 android:layout_toRightOf="@+id/a"
                 android:text="n.你好"
-                android:textSize="20dp"
-                android:textColor="@color/black"
+                android:textSize="@dimen/word_recognize_mean_size"
                 android:layout_marginLeft="8dp"
                 />
         </RelativeLayout>
@@ -105,8 +104,7 @@
                 android:layout_centerVertical="true"
                 android:layout_toRightOf="@+id/b"
                 android:text="n.你好"
-                android:textSize="20dp"
-                android:textColor="@color/black"
+                android:textSize="@dimen/word_recognize_mean_size"
                 android:layout_marginLeft="8dp"
                 />
         </RelativeLayout>
@@ -133,8 +131,7 @@
                 android:layout_centerVertical="true"
                 android:layout_toRightOf="@+id/c"
                 android:text="n.你好"
-                android:textSize="20dp"
-                android:textColor="@color/black"
+                android:textSize="@dimen/word_recognize_mean_size"
                 android:layout_marginLeft="8dp"
                 />
         </RelativeLayout>
@@ -161,8 +158,7 @@
                 android:layout_centerVertical="true"
                 android:layout_toRightOf="@+id/d"
                 android:text="n.你好"
-                android:textColor="@color/black"
-                android:textSize="20dp"
+                android:textSize="@dimen/word_recognize_mean_size"
                 android:layout_marginLeft="8dp"
                 />
         </RelativeLayout>

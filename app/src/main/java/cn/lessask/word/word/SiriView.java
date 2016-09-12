@@ -92,10 +92,8 @@ public class SiriView extends View {
                     if(isActive) {
                         if (waveHeight < 0.01 && waveHeight > -0.01 || waveHeight < targetHeight + 0.01 && waveHeight > targetHeight - 0.01) {
                             targetHeight = (float) Math.random();
-                            Log.e("BB", "" + targetHeight);
                         }
                     }
-                    Log.e("AA",""+waveHeight);
 				}
 			} catch (InterruptedException e) {
 				e.printStackTrace();
