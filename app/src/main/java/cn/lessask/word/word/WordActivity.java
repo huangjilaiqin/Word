@@ -3,6 +3,7 @@ package cn.lessask.word.word;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Parcel;
@@ -50,8 +51,6 @@ public class WordActivity extends AppCompatActivity {
     View wordLearn,wordReviveLayout,wordRecognize,wordInfoLayout,wordGroupLayout ;
 
     private CircleProgressView timer,learnTimer;
-    private LinearLayout meanings;
-    private View nextLayout,selectLayout;
     private Button next;
     private Button know,unknow;
 
@@ -71,10 +70,18 @@ public class WordActivity extends AppCompatActivity {
     private TextView groupMean1,groupMean2,groupMean3,groupMean4,groupMean5,groupMean6,groupMean7;
 
     //辨认单词
-    private TextView recognizeWord,recognizeUkphone;
+    private TextView recognizeWord,recognizeWordZh,recognizeUkphone;
+    private SiriView recognizeSiriView;
     private TextView answera,answerb,answerc,answerd;
     private View answeraItem,answerbItem,answercItem,answerdItem;
     private int recognizeAnswer;
+    private View recognizeType1,recognizeType2,recognizeType3;
+
+    private TextView reviveWord,reviveUkPhone;
+    private TextView reviveMean1,reviveMean2,reviveMean3,reviveMean4;
+    private Button reviveKnow,reviveUnknow;
+    private CircleProgressView reviveCircle;
+    private LinearLayout reviveMeanings;
 
     private int thinkTimes = 3000;
 
@@ -109,7 +116,7 @@ public class WordActivity extends AppCompatActivity {
     private void gotoLean(){
         learnWords=getGroupOfWords(user.getUserid(),1);
 
-        Log.e(TAG, "notSyncWords :"+notSyncWords.toString());
+        Log.e(TAG, "notSyncWords :" + notSyncWords.toString());
         if(notSyncWords.length()>0){
             downloadWords(user.getUserid(),user.getToken(),1,notSyncWords.toString());
             notSyncWords.delete(0,notSyncWords.length());
@@ -125,11 +132,25 @@ public class WordActivity extends AppCompatActivity {
             learnIndex++;
             int status = word.getStatus();
             switch (status){
+                //新单词
                 case 0:
                     setWordLearnLayout(word);
                     break;
+                //英->中辨认
                 case 1:
-                    setWordRecognizeLayout(word);
+                    setWordRecognizeLayout(word,1);
+                    break;
+                //回想
+                case 2:
+                    setWordReviveLayout(word);
+                    break;
+                //中->英辨认
+                case 3:
+                    setWordRecognizeLayout(word,2);
+                    break;
+                //音->中辨认
+                case 4:
+                    setWordRecognizeLayout(word,3);
                     break;
             }
             return true;
@@ -213,7 +234,7 @@ public class WordActivity extends AppCompatActivity {
         Log.e(TAG,"getGroupOfWords");
         ArrayList<Word> words = new ArrayList<>();
         //String reviewSql = "select id,word,usphone,ukphone,mean,sentence,status,review,date('now') from t_words where userid=? and wtype=? and review>date('now') order by review desc limit 7";
-        String reviewSql = "select id,word,usphone,ukphone,mean,sentence,status,review,strftime('%s','now','localtime') from t_words where userid=? and wtype=? and status<2 order by review desc limit 7";
+        String reviewSql = "select id,word,usphone,ukphone,mean,sentence,status,review,strftime('%s','now','localtime') from t_words where userid=? and wtype=? and status<5 order by review desc limit 7";
         Cursor cursor = globalInfo.getDb(WordActivity.this).rawQuery(reviewSql,new String[]{""+userid,""+wtype});
         while (cursor.moveToNext()){
             int id =cursor.getInt(0);
@@ -226,7 +247,7 @@ public class WordActivity extends AppCompatActivity {
             Date review = new Date(cursor.getLong(7)*1000);
             //Log.e(TAG, wordStr+", review:"+review+", now:"+cursor.getLong(8));
 
-            Log.e(TAG, wordStr+", us:"+usphone+", uk:"+ukphone+", mean:"+mean);
+            Log.e(TAG, wordStr+", status:"+status+", mean:"+mean);
             if(usphone.length()==0 && ukphone.length()==0 && mean.length()==0) {
                 if(notSyncWords.length()>0)
                     notSyncWords.append(","+wordStr);
@@ -271,11 +292,43 @@ public class WordActivity extends AppCompatActivity {
 
     private void initWordRecognize(){
         recognizeWord=(TextView)wordRecognize.findViewById(R.id.word);
+        recognizeWordZh=(TextView)wordRecognize.findViewById(R.id.word_zh);
+        recognizeSiriView=(SiriView)wordRecognize.findViewById(R.id.siriView);
+        // 设置曲线高度，height的取值是0f~1f
+        recognizeSiriView.setWaveHeight(0f);
+        // 设置曲线的粗细，width的取值大于0f
+        recognizeSiriView.setWaveWidth(5f);
+        // 设置曲线颜色
+        recognizeSiriView.setWaveColor(Color.rgb(39, 188, 136));
+        // 设置曲线在X轴上的偏移量，默认值为0f
+        recognizeSiriView.setWaveOffsetX(0f);
+        // 设置曲线的数量，默认是4
+        recognizeSiriView.setWaveAmount(4);
+        // 设置曲线的速度，默认是0.1f
+        recognizeSiriView.setWaveSpeed(0.1f);
+
+        recognizeSiriView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(recognizeSiriView.isActive())
+                    recognizeSiriView.stop();
+                else {
+                    recognizeSiriView.start();
+                    Word word=learnWords.get(learnIndex);
+                    playPhoneFile(word.getWord(),"uk");
+                }
+
+            }
+        });
         recognizeUkphone=(TextView)wordRecognize.findViewById(R.id.ukphone);
         answera = (TextView)wordRecognize.findViewById(R.id.answera);
         answerb = (TextView)wordRecognize.findViewById(R.id.answerb);
         answerc = (TextView)wordRecognize.findViewById(R.id.answerc);
         answerd = (TextView)wordRecognize.findViewById(R.id.answerd);
+
+        recognizeType1=wordRecognize.findViewById(R.id.recognize_type1);
+        recognizeType2=wordRecognize.findViewById(R.id.recognize_type2);
+        recognizeType3=wordRecognize.findViewById(R.id.recognize_type3);
 
         answeraItem = wordRecognize.findViewById(R.id.answera_item);
         answerbItem  = wordRecognize.findViewById(R.id.answerb_item);
@@ -334,28 +387,75 @@ public class WordActivity extends AppCompatActivity {
         }
     };
 
-    private void setWordRecognizeLayout(Word word){
-        recognizeWord.setText(word.getWord());
-        recognizeUkphone.setText("/"+word.getUkphone()+"/");
-        TextView[] answerItems = new TextView[]{answera,answerb,answerc,answerd};
-        //获取用于混淆的三个单词的意思
-        recognizeAnswer=(int)(Math.random()*4);
-        Log.e(TAG, "recognizeAnswer:"+recognizeAnswer);
-        ArrayList<String> errorAnswers = getErrorAnswers(word.getId());
+    private void setWordRecognizeLayout(Word word,int type){
+        if(type==1) {
+            recognizeType1.setVisibility(View.VISIBLE);
+            recognizeType2.setVisibility(View.INVISIBLE);
+            recognizeType3.setVisibility(View.INVISIBLE);
+            recognizeWord.setText(word.getWord());
+            recognizeUkphone.setText("/" + word.getUkphone() + "/");
+            TextView[] answerItems = new TextView[]{answera, answerb, answerc, answerd};
+            //获取用于混淆的三个单词的意思
+            recognizeAnswer = (int) (Math.random() * 4);
+            Log.e(TAG, "recognizeAnswer:" + recognizeAnswer);
+            ArrayList<String> errorAnswers = getErrorAnswers(word.getId());
 
-        TextView answerItem=null;
-        for(int i=0,errorI=0;i<4;i++){
-            answerItem=answerItems[i];
-            answerItem.setTextColor(getResources().getColor(R.color.black));
-            if(i==recognizeAnswer){
-                answerItem.setText(getFirstMean(word.getMean()));
-            }else {
-                answerItem.setText(errorAnswers.get(errorI++));
+            TextView answerItem = null;
+            for (int i = 0, errorI = 0; i < 4; i++) {
+                answerItem = answerItems[i];
+                answerItem.setTextColor(getResources().getColor(R.color.black));
+                if (i == recognizeAnswer) {
+                    answerItem.setText(getFirstMean(word.getMean()));
+                } else {
+                    answerItem.setText(errorAnswers.get(errorI++));
+                }
             }
+        }else if(type==2){
+            recognizeType1.setVisibility(View.INVISIBLE);
+            recognizeType2.setVisibility(View.VISIBLE);
+            recognizeType3.setVisibility(View.INVISIBLE);
+
+            recognizeWordZh.setText(getFirstMean(word.getMean()));
+            TextView[] answerItems = new TextView[]{answera, answerb, answerc, answerd};
+            //获取用于混淆的三个单词的意思
+            recognizeAnswer = (int) (Math.random() * 4);
+            Log.e(TAG, "recognizeAnswer:" + recognizeAnswer);
+            ArrayList<String> errorAnswers = getErrorAnswersWords(word.getId());
+
+            TextView answerItem = null;
+            for (int i = 0, errorI = 0; i < 4; i++) {
+                answerItem = answerItems[i];
+                answerItem.setTextColor(getResources().getColor(R.color.black));
+                if (i == recognizeAnswer) {
+                    answerItem.setText(word.getWord());
+                } else {
+                    answerItem.setText(errorAnswers.get(errorI++));
+                }
+            }
+        }else{
+            recognizeType1.setVisibility(View.INVISIBLE);
+            recognizeType2.setVisibility(View.INVISIBLE);
+            recognizeType3.setVisibility(View.VISIBLE);
+
+            TextView[] answerItems = new TextView[]{answera, answerb, answerc, answerd};
+            //获取用于混淆的三个单词的意思
+            recognizeAnswer = (int) (Math.random() * 4);
+            Log.e(TAG, "recognizeAnswer:" + recognizeAnswer);
+            ArrayList<String> errorAnswers = getErrorAnswers(word.getId());
+
+            TextView answerItem = null;
+            for (int i = 0, errorI = 0; i < 4; i++) {
+                answerItem = answerItems[i];
+                answerItem.setTextColor(getResources().getColor(R.color.black));
+                if (i == recognizeAnswer) {
+                    answerItem.setText(getFirstMean(word.getMean()));
+                } else {
+                    answerItem.setText(errorAnswers.get(errorI++));
+                }
+            }
+            playPhoneFile(word.getWord(),"uk");
         }
-
         setContentView(wordRecognize);
-
     }
 
     private ArrayList<String> getErrorAnswers(int id){
@@ -381,6 +481,33 @@ public class WordActivity extends AppCompatActivity {
                 answers.add("n. 邮费，邮资");
             }else if(count==2){
                 answers.add("vt. 陈列，展览");
+            }
+        }
+        return answers;
+    }
+    private ArrayList<String> getErrorAnswersWords(int id){
+        ArrayList<String> answers = new ArrayList<>();
+
+        int minId = id-15;
+        Cursor cursor = globalInfo.getDb(WordActivity.this).rawQuery("select word from t_words where id<? and id>? order by random()",new String[]{""+id,""+minId});
+        int count = cursor.getCount();
+        if(count>=3){
+            for(int i=0;i<3;i++){
+                cursor.moveToNext();
+                answers.add(cursor.getString(0));
+            }
+        }else{
+            while(cursor.moveToNext())
+                answers.add(cursor.getString(0));
+            if(count==0){
+                answers.add("broadcast");
+                answers.add("gather");
+                answers.add("cultivate");
+            }else if(count==1){
+                answers.add("zero");
+                answers.add("distinct");
+            }else if(count==2){
+                answers.add("connect");
             }
         }
         return answers;
@@ -448,12 +575,12 @@ public class WordActivity extends AppCompatActivity {
                 infoMean4.setText(means[3]);
                 break;
         }
+        playPhoneFile(word.getWord(),"uk");
         setContentView(wordInfoLayout);
     }
 
     private void initWordLearn(){
         learnWord=(TextView) wordLearn.findViewById(R.id.word);
-        nextLayout=wordLearn.findViewById(R.id.next_layout);
         learnNext = (Button)wordLearn.findViewById(R.id.next);
         learnNext.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -521,52 +648,93 @@ public class WordActivity extends AppCompatActivity {
                 learnMean4.setText(means[3]);
                 break;
         }
+        playPhoneFile(word.getWord(),"uk");
         setContentView(wordLearn);
     }
 
 
     private void initWordRevive(){
-        selectLayout=wordReviveLayout.findViewById(R.id.select_layout);
-        know = (Button)wordReviveLayout.findViewById(R.id.know);
-        know.setOnClickListener(new View.OnClickListener() {
+        reviveWord=(TextView)wordReviveLayout.findViewById(R.id.word);
+        reviveKnow = (Button)wordReviveLayout.findViewById(R.id.know);
+        reviveKnow.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //setWordInfoLayout();
+                Word word = learnWords.get(learnIndex - 1);
+                setWordStatus(user.getUserid(),word,-1);
+                setWordInfoLayout(word);
             }
         });
-        unknow = (Button)wordReviveLayout.findViewById(R.id.unknow);
-        unknow.setOnClickListener(new View.OnClickListener() {
+        reviveUnknow= (Button)wordReviveLayout.findViewById(R.id.unknow);
+        reviveUnknow.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //setWordInfoLayout();
+                Word word = learnWords.get(learnIndex - 1);
+                setWordStatus(user.getUserid(),word,-1);
+                setWordInfoLayout(word);
             }
         });
+        reviveMeanings=(LinearLayout)wordReviveLayout.findViewById(R.id.meanings);
+        reviveUkPhone = (TextView)wordReviveLayout.findViewById(R.id.ukphone);
+        reviveMean1=(TextView)wordReviveLayout.findViewById(R.id.mean1);
+        reviveMean2=(TextView)wordReviveLayout.findViewById(R.id.mean2);
+        reviveMean3=(TextView)wordReviveLayout.findViewById(R.id.mean3);
+        reviveMean4=(TextView)wordReviveLayout.findViewById(R.id.mean4);
 
-        meanings = (LinearLayout)wordReviveLayout.findViewById(R.id.meanings);
-        timer = (CircleProgressView) wordReviveLayout.findViewById(R.id.timer);
-        timer.setValueAnimated(100, thinkTimes);
-        timer.setSeekModeEnabled(false);
-        timer.setTextMode(TextMode.TEXT);
-        timer.setText("");
-        timer.setSpinSpeed(1);
+        reviveCircle = (CircleProgressView) wordReviveLayout.findViewById(R.id.timer);
+        reviveCircle.setValue(0);
+        //reviveCircle.setValueAnimated(100, thinkTimes);
+        reviveCircle.setSeekModeEnabled(false);
+        reviveCircle.setTextMode(TextMode.TEXT);
+        reviveCircle.setText("");
+        reviveCircle.setSpinSpeed(1);
     }
 
 
 
-    private void setWordReviveLayout(){
-        timer.setVisibility(View.VISIBLE);
+    private void setWordReviveLayout(Word word){
+        reviveMeanings.setVisibility(View.INVISIBLE);
+        reviveCircle.setVisibility(View.VISIBLE);
         new android.os.Handler().postDelayed(
                 new Runnable() {
                     public void run() {
-                        timer.setVisibility(View.INVISIBLE);
-                        meanings.setVisibility(View.VISIBLE);
+                        reviveCircle.setVisibility(View.INVISIBLE);
+                        reviveMeanings.setVisibility(View.VISIBLE);
                     }
                 }, thinkTimes + 200);
+        reviveCircle.setValueAnimated(0, 100, thinkTimes);
+        reviveWord.setText(word.getWord());
+        reviveUkPhone.setText(word.getUkphone());
+        playPhoneFile(word.getWord(), "uk");
+        String[] means = word.getMean().split("#");
+        int size = means.length;
+        switch (size){
+            case 1:
+                reviveMean1.setText(means[0]);
+                reviveMean2.setText("");
+                reviveMean3.setText("");
+                reviveMean4.setText("");
+                break;
+            case 2:
+                reviveMean1.setText(means[0]);
+                reviveMean2.setText(means[1]);
+                reviveMean3.setText("");
+                reviveMean4.setText("");
+                break;
+            case 3:
+                reviveMean1.setText(means[0]);
+                reviveMean2.setText(means[1]);
+                reviveMean3.setText(means[2]);
+                reviveMean4.setText("");
+                break;
+            case 4:
+                reviveMean1.setText(means[0]);
+                reviveMean2.setText(means[1]);
+                reviveMean3.setText(means[2]);
+                reviveMean4.setText(means[3]);
+                break;
+        }
         setContentView(wordReviveLayout);
     }
-
-
-
 
 
     private void setWordGroupLayout(ArrayList<Word> learnWords){
@@ -684,6 +852,12 @@ public class WordActivity extends AppCompatActivity {
             mp.setDataSource(path);
             mp.prepare();
             mp.start();
+            mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+
+                }
+            });
         }catch (IOException e){
             Log.e(TAG, "playMp3 error:"+e);
         }

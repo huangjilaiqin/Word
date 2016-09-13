@@ -33,7 +33,7 @@
         android:layout_marginTop="68dp"
         />
     <TextView
-        android:id="@+id/soundmark"
+        android:id="@+id/ukphone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="18dp"
@@ -50,10 +50,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:layout_below="@id/soundmark"
+        android:layout_below="@id/ukphone"
         android:layout_marginTop="36dp"
         >
         <TextView
+            android:id="@+id/mean1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="22dp"
@@ -61,6 +62,7 @@
             android:text="n. 你好"
             />
         <TextView
+            android:id="@+id/mean2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="22dp"
@@ -69,6 +71,7 @@
             android:text="n. 你好"
             />
         <TextView
+            android:id="@+id/mean3"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="22dp"
@@ -77,6 +80,7 @@
             android:text="n. 你好"
             />
         <TextView
+            android:id="@+id/mean4"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="22dp"

@@ -22,27 +22,69 @@
         android:textAllCaps="false"
         />
 
-    <TextView
-        android:id="@+id/word"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="@dimen/word_size"
-        android:textColor="#232323"
-        android:text="hello"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="24dp"
-        />
-    <TextView
-        android:id="@+id/ukphone"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="18dp"
-        android:textColor="#232323"
-        android:text="/hə'ləʊ/"
-        android:layout_centerHorizontal="true"
-        android:layout_below="@+id/word"
-        android:layout_marginTop="0dp"
-        />
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:id="@+id/recognize_type1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            >
+            <TextView
+                android:id="@+id/word"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/word_size"
+                android:textColor="#232323"
+                android:text="hello"
+                android:layout_gravity="center"
+                android:layout_marginTop="24dp"
+                />
+            <TextView
+                android:id="@+id/ukphone"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="18dp"
+                android:textColor="#232323"
+                android:text="/hə'ləʊ/"
+                android:layout_gravity="center"
+                android:layout_below="@+id/word"
+                android:layout_marginTop="0dp"
+                />
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/recognize_type2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            >
+            <TextView
+                android:id="@+id/word_zh"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/word_zh_size"
+                android:textColor="#232323"
+                android:text="hello"
+                android:layout_gravity="center"
+                android:layout_marginTop="24dp"
+                />
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/recognize_type3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            >
+            <cn.lessask.word.word.SiriView
+                android:id="@+id/siriView"
+                android:layout_width="200dp"
+                android:layout_height="100dp"
+                android:layout_gravity="center_horizontal"/>
+        </LinearLayout>
+
+    </RelativeLayout>
+
 
     <LinearLayout
         android:id="@+id/answers"
