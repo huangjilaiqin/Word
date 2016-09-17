@@ -5,9 +5,10 @@
     <dimen name="answer_item_height">78dp</dimen>
     <dimen name="mean_size">18dp</dimen>
     <dimen name="word_size">36dp</dimen>
-    <dimen name="word_zh_size">24dp</dimen>
+    <dimen name="word_zh_size">20dp</dimen>
     <dimen name="word_group_item_height">60dp</dimen>
     <dimen name="word_group_word_size">22dp</dimen>
     <dimen name="word_group_mean_size">16dp</dimen>
-    <dimen name="word_recognize_mean_size">16dp</dimen>
+    <dimen name="word_recognize_mean_size">16sp</dimen>
+    <dimen name="word_recognize_mean_en_size">24sp</dimen>
 </resources>

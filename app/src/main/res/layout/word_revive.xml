@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="cn.lessask.word.word.WordActivity">
+    tools:context="cn.lessask.word.WordActivity">
 
     <TextView
         android:id="@+id/soeasy"
@@ -57,7 +57,7 @@
             android:id="@+id/mean1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="22dp"
+            android:textSize="@dimen/mean_size"
             android:textAlignment="center"
             android:text="n. 你好"
             />
@@ -65,7 +65,7 @@
             android:id="@+id/mean2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="22dp"
+            android:textSize="@dimen/mean_size"
             android:textAlignment="center"
             android:layout_marginTop="5dp"
             android:text="n. 你好"
@@ -74,7 +74,7 @@
             android:id="@+id/mean3"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="22dp"
+            android:textSize="@dimen/mean_size"
             android:layout_marginTop="5dp"
             android:textAlignment="center"
             android:text="n. 你好"
@@ -83,7 +83,7 @@
             android:id="@+id/mean4"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="22dp"
+            android:textSize="@dimen/mean_size"
             android:layout_marginTop="5dp"
             android:textAlignment="center"
             android:text="n. 你好"

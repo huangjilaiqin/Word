@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_white"
-    tools:context="cn.lessask.word.word.MainActivity">
+    tools:context="cn.lessask.word.MainActivity">
 
     <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/head_img"
@@ -17,12 +17,6 @@
         android:layout_alignParentLeft="true"
         android:src="@mipmap/ic_launcher"
         />
-
-    <cn.lessask.word.word.SiriView
-        android:id="@+id/siriView"
-        android:layout_width="200dp"
-        android:layout_height="100dp"
-        android:layout_centerInParent="true"/>
 
     <RelativeLayout
         android:layout_alignParentBottom="true"
@@ -40,7 +34,7 @@
             android:textAllCaps="false"
             android:layout_centerInParent="true"
             />
-        <cn.lessask.word.word.WaveView
+        <cn.lessask.word.WaveView
             android:id="@+id/waveview"
             android:layout_centerInParent="true"
             android:layout_width="300dp"

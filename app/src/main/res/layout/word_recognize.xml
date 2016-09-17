@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="cn.lessask.word.word.WordActivity">
+    tools:context="cn.lessask.word.WordActivity">
 
     <TextView
         android:id="@+id/soeasy"
@@ -64,10 +64,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="@dimen/word_zh_size"
+                android:layout_marginRight="18dp"
+                android:layout_marginLeft="18dp"
                 android:textColor="#232323"
                 android:text="hello"
                 android:layout_gravity="center"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="36dp"
                 />
         </LinearLayout>
         <LinearLayout
@@ -76,7 +78,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             >
-            <cn.lessask.word.word.SiriView
+            <cn.lessask.word.SiriView
                 android:id="@+id/siriView"
                 android:layout_width="200dp"
                 android:layout_height="100dp"
@@ -118,7 +120,8 @@
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
                 android:layout_toRightOf="@+id/a"
-                android:text="n.你好"
+                android:layout_marginRight="6dp"
+                android:text="n.你好你好你好你好你好你好你好你"
                 android:textSize="@dimen/word_recognize_mean_size"
                 android:layout_marginLeft="8dp"
                 />
@@ -145,6 +148,7 @@
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
                 android:layout_toRightOf="@+id/b"
+                android:layout_marginRight="6dp"
                 android:text="n.你好"
                 android:textSize="@dimen/word_recognize_mean_size"
                 android:layout_marginLeft="8dp"
@@ -172,6 +176,7 @@
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
                 android:layout_toRightOf="@+id/c"
+                android:layout_marginRight="6dp"
                 android:text="n.你好"
                 android:textSize="@dimen/word_recognize_mean_size"
                 android:layout_marginLeft="8dp"
@@ -199,6 +204,7 @@
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
                 android:layout_toRightOf="@+id/d"
+                android:layout_marginRight="6dp"
                 android:text="n.你好"
                 android:textSize="@dimen/word_recognize_mean_size"
                 android:layout_marginLeft="8dp"

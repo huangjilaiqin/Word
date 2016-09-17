@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@color/background_white"
     android:orientation="vertical"
-    tools:context="cn.lessask.word.word.WordActivity">
+    tools:context="cn.lessask.word.WordActivity">
 
     <ScrollView
         android:layout_width="match_parent"
