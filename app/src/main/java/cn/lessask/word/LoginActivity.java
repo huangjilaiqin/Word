@@ -72,7 +72,8 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     public void qqLogin() {
-        mTencent = Tencent.createInstance("1105464601", this.getApplicationContext());
+        //mTencent = Tencent.createInstance("1105464601", this.getApplicationContext());
+        mTencent = Tencent.createInstance("1105521767", this.getApplicationContext());
         if (!mTencent.isSessionValid())
         {
             loadingDialog = new LoadingDialog(this);

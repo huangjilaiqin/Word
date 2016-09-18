@@ -16,12 +16,14 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import com.alipay.sdk.app.PayTask;
 import com.android.volley.Request;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader;
 
 import java.util.Map;
 
+import cn.lessask.word.alipay.OrderInfoUtil2_0;
 import cn.lessask.word.model.User;
 import cn.lessask.word.model.WordList;
 import cn.lessask.word.net.GsonRequest;
@@ -33,6 +35,8 @@ public class MainActivity extends AppCompatActivity {
     private String TAG = MainActivity.class.getSimpleName();
     private final int LOGIN=1;
     private CircleImageView headImg;
+
+    private final String RSA_PRIVATE = "MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAK18h0X4GvsC1vTD26CTS/O+/HvjfQ74EDo74gS2ALGm/UD4adjqVHuvXLwtJzm3/ghKmybbO5h7PPLfKoF+fi5SmzDMpqDiv+7t+KartgmqEbtG7f6UuTgMPw1t8wtotv+l6TyOZ8PQlv8gUxbRtrKrRGaussGdk8CSNdk2ajQzAgMBAAECgYA2ig6QzZXV0ae4HRafnY7kGuePHw5CtXOMiyTb7Ee9kczOLwo/mjNjCtcxhVRujcw72RB7n7JVlnCrvcLEIPsTmk3FBzP3QbGeX3CSCWhVcwWdXckc8RdW2ECzWv8gIbgvyvyJi39VxqMToYmGSYgD2eYZqoqPvCduktM5KC9e4QJBAN4wXpfdWCvPCuSCvwiHnm+gJxBW2yRamkLCrUi+dtbh9sXgHsNGWqdFLYY1Y0VNPWzGaj1ZJDbTLPQcMW5IwVECQQDH4uVURbGQbIKPJVhfhUL3NYwR1IXurrYL5Iepavbxeo8kPy9czp37ZbIu27ZeTDEEd1s6XW0Oynuog+R/3txDAkAt0BlhBNGuTsV3MoJDNvtzFrmXQ+FxkIDoLQ3fxu3oBrWEPV76cqI0hS4K0y1B19hHem3jcmLmLwrA1qNWkwfRAkEAk5dm7BXV6aUlthrGKSnV64FfXp8FEdtxUlC5FxCDLITpgsMg7q8lmcZajhzviKtLmlejRfJMH5rFOgXBR+W/zwJAAzX1ZbiMUqxCe2ixgb3mvx/Sobjp9UrS9oGp8fzumkes23nueHtFOqZW1/fLaqoQijw3oCfIp+cvf7+wBu2c/Q==";
 
     private GlobalInfo globalInfo=GlobalInfo.getInstance();
     private boolean isInitDb=false;
@@ -56,6 +60,34 @@ public class MainActivity extends AppCompatActivity {
         unbindService(connection);
     }
 
+    private void callAliPay(){
+        Map<String, String> params = OrderInfoUtil2_0.buildOrderParamMap("2016091600523406");
+        String orderParam = OrderInfoUtil2_0.buildOrderParam(params);
+        String sign = OrderInfoUtil2_0.getSign(params, RSA_PRIVATE);
+        final String orderInfo = orderParam + "&" + sign;
+
+        Runnable payRunnable = new Runnable() {
+
+
+
+
+            @Override
+            public void run() {
+                PayTask alipay = new PayTask(MainActivity.this);
+                Map<String,String> result = alipay.payV2(orderInfo,true);
+
+                Log.e(TAG, "pay cb");
+                //Message msg = new Message();
+                //msg.what = SDK_PAY_FLAG;
+                //msg.obj = result;
+                //mHandler.sendMessage(msg);
+            }
+        };
+        // 必须异步调用
+        Thread payThread = new Thread(payRunnable);
+        payThread.start();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,6 +105,12 @@ public class MainActivity extends AppCompatActivity {
         });
 
         headImg = (CircleImageView)findViewById(R.id.head_img);
+        headImg.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                callAliPay();
+            }
+        });
 
         WaveView mWaveView = (WaveView)findViewById(R.id.waveview);
         /*
@@ -103,8 +141,8 @@ public class MainActivity extends AppCompatActivity {
 
         //为审核伪造的用户信息
 
-        User tuser = new User(1,"qq_F4327C81A7510540DCB6E9759010348F","唐三炮","272233d9580dab2c9e432992a0659b88","http://q.qlogo.cn/qqapp/1105464601/F4327C81A7510540DCB6E9759010348F/100","男");
-        storageUser(tuser);
+        //User tuser = new User(1,"qq_F4327C81A7510540DCB6E9759010348F","唐三炮","272233d9580dab2c9e432992a0659b88","http://q.qlogo.cn/qqapp/1105464601/F4327C81A7510540DCB6E9759010348F/100","男");
+        //storageUser(tuser);
 
         int userid = sp.getInt("userid", 0);
         String token = sp.getString("token", "");
