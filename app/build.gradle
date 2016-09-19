@@ -50,6 +50,7 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:23.2.1'
     compile 'com.android.support:palette-v7:23.1.1'
+    compile 'com.android.support:recyclerview-v7:23.1.1'
     compile 'de.hdodenhof:circleimageview:2.0.0'
     compile 'com.github.jakob-grabner:Circle-Progress-View:v1.2.9'
     compile files('libs/open_sdk_r5756_lite.jar')

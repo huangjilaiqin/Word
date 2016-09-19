@@ -13,4 +13,5 @@
     <color name="grey">#8E8E8E</color>
     <color name="black">#000000</color>
     <color name="word_color">#000000</color>
+    <color name="background_white_not_transparent">#ffE8E8E8</color>
 </resources>
