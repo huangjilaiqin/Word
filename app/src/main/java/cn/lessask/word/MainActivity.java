@@ -36,7 +36,22 @@ public class MainActivity extends AppCompatActivity {
     private final int LOGIN=1;
     private CircleImageView headImg;
 
-    private final String RSA_PRIVATE = "MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAK18h0X4GvsC1vTD26CTS/O+/HvjfQ74EDo74gS2ALGm/UD4adjqVHuvXLwtJzm3/ghKmybbO5h7PPLfKoF+fi5SmzDMpqDiv+7t+KartgmqEbtG7f6UuTgMPw1t8wtotv+l6TyOZ8PQlv8gUxbRtrKrRGaussGdk8CSNdk2ajQzAgMBAAECgYA2ig6QzZXV0ae4HRafnY7kGuePHw5CtXOMiyTb7Ee9kczOLwo/mjNjCtcxhVRujcw72RB7n7JVlnCrvcLEIPsTmk3FBzP3QbGeX3CSCWhVcwWdXckc8RdW2ECzWv8gIbgvyvyJi39VxqMToYmGSYgD2eYZqoqPvCduktM5KC9e4QJBAN4wXpfdWCvPCuSCvwiHnm+gJxBW2yRamkLCrUi+dtbh9sXgHsNGWqdFLYY1Y0VNPWzGaj1ZJDbTLPQcMW5IwVECQQDH4uVURbGQbIKPJVhfhUL3NYwR1IXurrYL5Iepavbxeo8kPy9czp37ZbIu27ZeTDEEd1s6XW0Oynuog+R/3txDAkAt0BlhBNGuTsV3MoJDNvtzFrmXQ+FxkIDoLQ3fxu3oBrWEPV76cqI0hS4K0y1B19hHem3jcmLmLwrA1qNWkwfRAkEAk5dm7BXV6aUlthrGKSnV64FfXp8FEdtxUlC5FxCDLITpgsMg7q8lmcZajhzviKtLmlejRfJMH5rFOgXBR+W/zwJAAzX1ZbiMUqxCe2ixgb3mvx/Sobjp9UrS9oGp8fzumkes23nueHtFOqZW1/fLaqoQijw3oCfIp+cvf7+wBu2c/Q==";
+    //private final String RSA_PRIVATE = "MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAK18h0X4GvsC1vTD26CTS/O+/HvjfQ74EDo74gS2ALGm/UD4adjqVHuvXLwtJzm3/ghKmybbO5h7PPLfKoF+fi5SmzDMpqDiv+7t+KartgmqEbtG7f6UuTgMPw1t8wtotv+l6TyOZ8PQlv8gUxbRtrKrRGaussGdk8CSNdk2ajQzAgMBAAECgYA2ig6QzZXV0ae4HRafnY7kGuePHw5CtXOMiyTb7Ee9kczOLwo/mjNjCtcxhVRujcw72RB7n7JVlnCrvcLEIPsTmk3FBzP3QbGeX3CSCWhVcwWdXckc8RdW2ECzWv8gIbgvyvyJi39VxqMToYmGSYgD2eYZqoqPvCduktM5KC9e4QJBAN4wXpfdWCvPCuSCvwiHnm+gJxBW2yRamkLCrUi+dtbh9sXgHsNGWqdFLYY1Y0VNPWzGaj1ZJDbTLPQcMW5IwVECQQDH4uVURbGQbIKPJVhfhUL3NYwR1IXurrYL5Iepavbxeo8kPy9czp37ZbIu27ZeTDEEd1s6XW0Oynuog+R/3txDAkAt0BlhBNGuTsV3MoJDNvtzFrmXQ+FxkIDoLQ3fxu3oBrWEPV76cqI0hS4K0y1B19hHem3jcmLmLwrA1qNWkwfRAkEAk5dm7BXV6aUlthrGKSnV64FfXp8FEdtxUlC5FxCDLITpgsMg7q8lmcZajhzviKtLmlejRfJMH5rFOgXBR+W/zwJAAzX1ZbiMUqxCe2ixgb3mvx/Sobjp9UrS9oGp8fzumkes23nueHtFOqZW1/fLaqoQijw3oCfIp+cvf7+wBu2c/Q==";
+    private final String RSA_PRIVATE =
+            "MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAK18h0X4GvsC1vTD" +
+            "26CTS/O+/HvjfQ74EDo74gS2ALGm/UD4adjqVHuvXLwtJzm3/ghKmybbO5h7PPLf" +
+            "KoF+fi5SmzDMpqDiv+7t+KartgmqEbtG7f6UuTgMPw1t8wtotv+l6TyOZ8PQlv8g" +
+            "UxbRtrKrRGaussGdk8CSNdk2ajQzAgMBAAECgYA2ig6QzZXV0ae4HRafnY7kGueP" +
+            "Hw5CtXOMiyTb7Ee9kczOLwo/mjNjCtcxhVRujcw72RB7n7JVlnCrvcLEIPsTmk3F" +
+            "BzP3QbGeX3CSCWhVcwWdXckc8RdW2ECzWv8gIbgvyvyJi39VxqMToYmGSYgD2eYZ" +
+            "qoqPvCduktM5KC9e4QJBAN4wXpfdWCvPCuSCvwiHnm+gJxBW2yRamkLCrUi+dtbh" +
+            "9sXgHsNGWqdFLYY1Y0VNPWzGaj1ZJDbTLPQcMW5IwVECQQDH4uVURbGQbIKPJVhf" +
+            "hUL3NYwR1IXurrYL5Iepavbxeo8kPy9czp37ZbIu27ZeTDEEd1s6XW0Oynuog+R/" +
+            "3txDAkAt0BlhBNGuTsV3MoJDNvtzFrmXQ+FxkIDoLQ3fxu3oBrWEPV76cqI0hS4K" +
+            "0y1B19hHem3jcmLmLwrA1qNWkwfRAkEAk5dm7BXV6aUlthrGKSnV64FfXp8FEdtx" +
+            "UlC5FxCDLITpgsMg7q8lmcZajhzviKtLmlejRfJMH5rFOgXBR+W/zwJAAzX1ZbiM" +
+            "UqxCe2ixgb3mvx/Sobjp9UrS9oGp8fzumkes23nueHtFOqZW1/fLaqoQijw3oCfI" +
+            "p+cvf7+wBu2c/Q==";
 
     private GlobalInfo globalInfo=GlobalInfo.getInstance();
     private boolean isInitDb=false;
@@ -63,17 +78,19 @@ public class MainActivity extends AppCompatActivity {
     private void callAliPay(){
         Map<String, String> params = OrderInfoUtil2_0.buildOrderParamMap("2016091600523406");
         String orderParam = OrderInfoUtil2_0.buildOrderParam(params);
+        Log.e(TAG, "orderParam "+orderParam);
         String sign = OrderInfoUtil2_0.getSign(params, RSA_PRIVATE);
+        Log.e(TAG, "sign "+sign);
         final String orderInfo = orderParam + "&" + sign;
 
+        Log.e(TAG, "orderInfo: "+orderInfo);
+
         Runnable payRunnable = new Runnable() {
-
-
-
-
             @Override
             public void run() {
                 PayTask alipay = new PayTask(MainActivity.this);
+                String v = alipay.getVersion();
+                Log.e(TAG, "version:"+v);
                 Map<String,String> result = alipay.payV2(orderInfo,true);
 
                 Log.e(TAG, "pay cb");
