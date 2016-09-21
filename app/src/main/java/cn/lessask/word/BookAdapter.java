@@ -50,6 +50,11 @@ public class BookAdapter extends BaseRecyclerAdapter<Book, BookAdapter.MyViewHol
     public void onBindViewHolder(MyViewHolder myHolder, final int position) {
         Book data = getItem(position);
         myHolder.name.setText(data.getName());
+        if(data.getIscurrent()==1){
+            //myHolder.iscurrent.setImageResource(context.getResources().getI(R.id.qq_login));
+        }else{
+
+        }
 
         myHolder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -57,6 +62,7 @@ public class BookAdapter extends BaseRecyclerAdapter<Book, BookAdapter.MyViewHol
                 onItemClickListener.onItemClick(view, position);
             }
         });
+        /*
         myHolder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
@@ -68,18 +74,20 @@ public class BookAdapter extends BaseRecyclerAdapter<Book, BookAdapter.MyViewHol
                 return false;
             }
         });
-
+        */
 
     }
 
     public static class MyViewHolder extends RecyclerView.ViewHolder{
         View itemView;
         TextView name;
+        ImageView iscurrent;
 
         public MyViewHolder(View itemView) {
             super(itemView);
             this.itemView = itemView;
             name = (TextView)itemView.findViewById(R.id.name);
+            iscurrent = (ImageView)itemView.findViewById(R.id.iscurrent);
 
         }
     }

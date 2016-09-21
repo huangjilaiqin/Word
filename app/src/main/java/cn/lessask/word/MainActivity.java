@@ -54,7 +54,6 @@ public class MainActivity extends AppCompatActivity {
             "p+cvf7+wBu2c/Q==";
 
     private GlobalInfo globalInfo=GlobalInfo.getInstance();
-    private boolean isInitDb=false;
 
     private ServiceConnection connection = new ServiceConnection() {
 
@@ -116,8 +115,13 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.go).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, WordActivity.class);
-                startActivity(intent);
+                if(globalInfo.getUser().getBookid()>0) {
+                    Intent intent = new Intent(MainActivity.this, WordActivity.class);
+                    startActivity(intent);
+                }else{
+                    Intent intent = new Intent(MainActivity.this, SelectBookActivity.class);
+                    startActivity(intent);
+                }
             }
         });
 
@@ -167,12 +171,9 @@ public class MainActivity extends AppCompatActivity {
         String token = sp.getString("token", "");
         String nickname = sp.getString("nickname", "");
         String headimg = sp.getString("headimg","");
-        String gender = sp.getString("gender","");
-        Log.e(TAG, "userid "+userid);
-        Log.e(TAG, "token "+token);
-        Log.e(TAG, "token "+nickname);
-        Log.e(TAG, "token "+headimg);
-        Log.e(TAG, "token "+gender);
+        String gender = sp.getString("gender", "");
+        int bookid = sp.getInt("bookid",0);
+
         if(userid==0 || token==""){
             Intent intent = new Intent(MainActivity.this, LoginActivity.class);
             startActivityForResult(intent, LOGIN);
@@ -181,14 +182,16 @@ public class MainActivity extends AppCompatActivity {
                 //加载用户信息
                 loadUserInfo(userid,token);
             }else{
-                User user = new User(userid,"",nickname,token,headimg,gender);
+                User user = new User(userid,"",nickname,token,headimg,gender,bookid);
                 globalInfo.setUser(user);
                 loadHeadImg(user.getHeadimg());
 
-                if(isInitDb) {
-                    Toast.makeText(MainActivity.this,"changeList",Toast.LENGTH_SHORT).show();
-                    changeList(userid,token,0,1);
-                    isInitDb=false;
+                if(bookid>0){
+                    //检查t_words是否下载了相应的词库
+                    String[] where = new String[]{""+user.getUserid(),""+bookid};
+                    Cursor cursor = globalInfo.getDb(MainActivity.this).rawQuery("select count(id) as num from t_words where userid=? and wtype=?",where);
+                    if(cursor.getCount()==0)
+                        changeList(user.getUserid(),user.getToken(),0,bookid);
                 }
             }
         }
@@ -307,6 +310,16 @@ public class MainActivity extends AppCompatActivity {
         editor.putString("gender", user.getGender());
         editor.commit();
     }
+    private void storageUser2Db(User user){
+        ContentValues values = new ContentValues();
+        values.put("userid",user.getUserid());
+        values.put("token", user.getToken());
+        values.put("nickname", user.getNickname());
+        values.put("headimg", user.getHeadimg());
+        values.put("gender",user.getGender());
+        globalInfo.getDb(MainActivity.this).insert("t_user", null, values);
+
+    }
 
     private void initDb(SharedPreferences baseInfo){
         SharedPreferences.Editor editor = baseInfo.edit();
@@ -315,13 +328,14 @@ public class MainActivity extends AppCompatActivity {
 
         Log.e(TAG, "create db begin");
         //db.execSQL("drop table t_words");
+        //db.execSQL("create table t_user(userid INTEGER primary key,token text,nickname text,headimg text,gender text)");
+        //db.execSQL("create table t_books(userid integer,bookid integer,completeness real,current integer)");
         db.execSQL("create table t_words(`id` INTEGER primary key,`userid` INTEGER not null,`wtype` integer not null,`word` text not null,`usphone` text default '',`ukphone` text default '',mean text default '',sentence text default '',`review` TIMESTAMP,`status` tinyint not null default 0,`sync` tinyint not null default 1)");
 
         Log.e(TAG, "create db end");
 
         editor.putBoolean("initDb", true);
         editor.commit();
-        isInitDb=true;
         Toast.makeText(MainActivity.this,"initDb",Toast.LENGTH_SHORT).show();
 
     }
@@ -334,17 +348,22 @@ public class MainActivity extends AppCompatActivity {
             switch (requestCode) {
                 case LOGIN:
                     User user = data.getParcelableExtra("user");
-                    Toast.makeText(MainActivity.this,user.getNickname(),Toast.LENGTH_LONG).show();
                     Log.e(TAG, "onActivityResult userid:" + user.getUserid() + ", nickname:" + user.getNickname());
 
                     storageUser(user);
+                    //storageUser2Db(user);
                     globalInfo.setUser(user);
                     loadHeadImg(user.getHeadimg());
-                    if(isInitDb) {
-                        Toast.makeText(MainActivity.this,"changeList",Toast.LENGTH_SHORT).show();
-                        changeList(user.getUserid(),user.getToken(),0,1);
-                        isInitDb=false;
+
+                    int bookid = user.getBookid();
+                    if(bookid>0){
+                        //检查t_words是否下载了相应的词库
+                        String[] where = new String[]{""+user.getUserid(),""+bookid};
+                        Cursor cursor = globalInfo.getDb(MainActivity.this).rawQuery("select count(id) as num from t_words where userid=? and wtype=?",where);
+                        if(cursor.getCount()==0)
+                            changeList(user.getUserid(),user.getToken(),0,bookid);
                     }
+
                     break;
             }
         }

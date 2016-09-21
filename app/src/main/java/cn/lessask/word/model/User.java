@@ -13,20 +13,23 @@ public class User extends Response{
     private String token;
     private String headimg;
     private String gender;
+    private int bookid;
 
     public User() {
     }
 
-    public User(int userid, String username, String nickname, String token,String headimg,String gender) {
+    public User(int userid, String username, String nickname, String token,String headimg,String gender,int bookid) {
         this.userid = userid;
         this.username = username;
         this.nickname = nickname;
         this.token = token;
         this.headimg=headimg;
         this.gender=gender;
+        this.bookid=bookid;
     }
 
-    public User(int errno, String error, int userid, String username, String nickname, String token,String headimg,String gender) {
+
+    public User(int errno, String error, int userid, String username, String nickname, String token,String headimg,String gender,int bookid) {
         super(errno, error);
         this.userid = userid;
         this.username = username;
@@ -34,6 +37,7 @@ public class User extends Response{
         this.token = token;
         this.headimg=headimg;
         this.gender=gender;
+        this.bookid=bookid;
     }
 
     @Override
@@ -44,6 +48,7 @@ public class User extends Response{
         dest.writeString(token);
         dest.writeString(headimg);
         dest.writeString(gender);
+        dest.writeInt(bookid);
     }
 
     public static final Parcelable.Creator<User> CREATOR
@@ -55,14 +60,23 @@ public class User extends Response{
              String token = in.readString();
              String headimg = in.readString();
              String gender = in.readString();
+             int bookid=in.readInt();
 
-             return new User(userid,username,nickname,token,headimg,gender);
+             return new User(userid,username,nickname,token,headimg,gender,bookid);
          }
 
          public User[] newArray(int size) {
              return new User[size];
          }
     };
+
+    public int getBookid() {
+        return bookid;
+    }
+
+    public void setBookid(int bookid) {
+        this.bookid = bookid;
+    }
 
     public String getGender() {
         return gender;
