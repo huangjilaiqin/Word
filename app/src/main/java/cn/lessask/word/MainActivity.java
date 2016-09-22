@@ -229,7 +229,6 @@ public class MainActivity extends AppCompatActivity {
                             Log.e(TAG, "insert done");
                         }
                     }).start();
-
                 }
                 Cursor cursor = globalInfo.getDb(MainActivity.this).rawQuery("select count(id) as num from t_words",null);
                 while (cursor.moveToNext()){
