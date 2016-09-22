@@ -18,8 +18,10 @@ import com.android.volley.VolleyError;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Map;
 
+import cn.lessask.word.dialog.LoadingDialog;
 import cn.lessask.word.model.ArrayListResponse;
 import cn.lessask.word.model.Book;
 import cn.lessask.word.model.User;
@@ -34,6 +36,7 @@ import cn.lessask.word.util.OnClickListener;
 
 public class SelectBookActivity extends AppCompatActivity {
     private String TAG = SelectBookActivity.class.getSimpleName();
+    private final int LOGIN=1;
     private RecyclerViewStatusSupport mRecyclerView;
     private LinearLayoutManager mLinearLayoutManager;
     private BookAdapter mRecyclerViewAdapter;
@@ -83,18 +86,17 @@ public class SelectBookActivity extends AppCompatActivity {
             @Override
             public void onItemClick(Object object) {
                 Book book = (Book)object;
-                //更新数据库
-                SharedPreferences sp = SelectBookActivity.this.getSharedPreferences("SP", MODE_PRIVATE);
-                SharedPreferences.Editor editor = sp.edit();
-                editor.putInt("bookid", book.getBookid());
-                editor.commit();
                 //切换词库
-                    //检查词库是否存在
-                    String[] where=new String[]{""+user.getUserid(),""+book.getBookid()};
-                    Cursor cursor = globalInfo.getDb(SelectBookActivity.this).rawQuery("select count(id) as num from t_words where userid=? and wtype=?",where);
-                    if(cursor.getCount()==0)
-                        //changeList(user.getUserid(),user.getToken(),0,bookid);
-                    //下载词库
+                String[] where=new String[]{""+user.getUserid(),""+book.getBookid()};
+                Log.e(TAG, ""+user.getUserid()+", "+book.getBookid());
+                Cursor cursor = globalInfo.getDb(SelectBookActivity.this).rawQuery("select id from t_words where userid=? and bookid=? order by id desc limit 1",where);
+                int id=0;
+                if(cursor.getCount()>0) {
+                    cursor.moveToNext();
+                    id=cursor.getInt(0);
+                }
+
+                changeBook(user.getUserid(),user.getToken(),id,book.getBookid());
             }
         });
         //设置点击事件, 编辑动作
@@ -125,7 +127,18 @@ public class SelectBookActivity extends AppCompatActivity {
                 if(response.getError()!=null || response.getErrno()!=0){
                     Toast.makeText(SelectBookActivity.this, response.getError(), Toast.LENGTH_SHORT).show();
                 }else {
-                    mRecyclerViewAdapter.appendToList(response.getDatas());
+                    List<Book> books = response.getDatas();
+                    int bookid = user.getBookid();
+                    if(bookid>0) {
+                        for (int i=0,size=books.size();i<size;i++){
+                            Book book = books.get(i);
+                            if(book.getBookid()==bookid){
+                                book.setIscurrent(1);
+                                break;
+                            }
+                        }
+                    }
+                    mRecyclerViewAdapter.appendToList(books);
                     mRecyclerViewAdapter.notifyDataSetChanged();
                 }
             }
@@ -145,55 +158,61 @@ public class SelectBookActivity extends AppCompatActivity {
         volleyHelper.addToRequestQueue(gsonRequest);
     }
 
-    private void changeList(final int userid,final String token,final int id,final int wtype){
-        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/changelist", WordList.class, new GsonRequest.PostGsonRequest<WordList>() {
+    private void changeBook(final int userid,final String token,final int id,final int bookid){
+        final LoadingDialog loadingDialog = new LoadingDialog(SelectBookActivity.this);
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/changebook", WordList.class, new GsonRequest.PostGsonRequest<WordList>() {
             @Override
-            public void onStart() {}
+            public void onStart() {
+                loadingDialog.show();
+            }
             @Override
-            public void onResponse(WordList user) {
-                if(user.getError()!=null && user.getError()!="" || user.getErrno()!=0){
-                    if(user.getErrno()==601){
+            public void onResponse(WordList wordlist) {
+                if(wordlist.getError()!=null && wordlist.getError()!="" || wordlist.getErrno()!=0){
+                    loadingDialog.cancel();
+                    if(wordlist.getErrno()==601){
                         Intent intent = new Intent(SelectBookActivity.this, LoginActivity.class);
                         startActivityForResult(intent, LOGIN);
                     }else {
-                        Toast.makeText(SelectBookActivity.this, "changeList error:" + user.getError(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(SelectBookActivity.this, "changeBook error:" + wordlist.getError(), Toast.LENGTH_SHORT).show();
                     }
                 }else {
                     //本地存储
-                    final String wordsStr = user.getWords();
-                    final String[] words = wordsStr.split(";");
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            for(int i=0,size=words.length;i<size;i++){
-                                String[] info = words[i].split(":");
-                                ContentValues values = new ContentValues();
-                                values.put("id",info[0]);
-                                values.put("word",info[1]);
-                                values.put("userid",userid);
-                                values.put("wtype",wtype);
-                                globalInfo.getDb(SelectBookActivity.this).insert("t_words",null,values);
+                    final String wordsStr = wordlist.getWords();
+                    if(wordsStr.length()>0) {
+                        final String[] words = wordsStr.split(";");
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                for (int i = 0, size = words.length; i < size; i++) {
+                                    String[] info = words[i].split(":");
+                                    ContentValues values = new ContentValues();
+                                    values.put("id", info[0]);
+                                    values.put("word", info[1]);
+                                    values.put("userid", userid);
+                                    values.put("bookid", bookid);
+                                    globalInfo.getDb(SelectBookActivity.this).insert("t_words", null, values);
+                                }
+                                loadingDialog.cancel();
+                                Log.e(TAG, "insert done");
                             }
-                            Log.e(TAG, "insert done");
-                        }
-                    }).start();
+                        }).start();
+                    }else{
+                        Log.e(TAG, "now new words,bookid:"+bookid);
+                        loadingDialog.cancel();
+                    }
+                    //设置bookid
+                    SharedPreferences sp = SelectBookActivity.this.getSharedPreferences("SP", MODE_PRIVATE);
+                    //存入数据
+                    SharedPreferences.Editor editor = sp.edit();
+                    editor.putInt("bookid", bookid);
+                    editor.commit();
+                    user.setBookid(bookid);
                 }
-                Cursor cursor = globalInfo.getDb(SelectBookActivity.this).rawQuery("select count(id) as num from t_words",null);
-                while (cursor.moveToNext()){
-                    int num=cursor.getInt(0);
-                    Log.e(TAG, "size:"+num);
-                }
-                cursor.close();
-                //设置wtype
-                SharedPreferences sp = SelectBookActivity.this.getSharedPreferences("SP", MODE_PRIVATE);
-                //存入数据
-                SharedPreferences.Editor editor = sp.edit();
-                editor.putInt("wtype", wtype);
-                editor.commit();
             }
 
             @Override
             public void onError(VolleyError error) {
+                loadingDialog.cancel();
                 Toast.makeText(SelectBookActivity.this,  error.toString(), Toast.LENGTH_SHORT).show();
             }
             @Override
@@ -201,7 +220,7 @@ public class SelectBookActivity extends AppCompatActivity {
                 datas.put("userid", "" + userid);
                 datas.put("token", token);
                 datas.put("id",""+id);
-                datas.put("wtype",""+wtype);
+                datas.put("bookid",""+bookid);
             }
         });
         VolleyHelper.getInstance().addToRequestQueue(gsonRequest);

@@ -7,7 +7,7 @@ import java.util.Date;
  */
 public class Word {
     private int id;
-    private int wtype;
+    private int bookid;
     private String word;
     private String usphone;
     private String ukphone;
@@ -21,9 +21,9 @@ public class Word {
 
     public Word() {
     }
-    public Word(int id, int wtype, String word, String usphone, String ukphone, String mean, String sentence, int status) {
+    public Word(int id, int bookid, String word, String usphone, String ukphone, String mean, String sentence, int status) {
         this.id = id;
-        this.wtype = wtype;
+        this.bookid = bookid;
         this.word = word;
         this.usphone = usphone;
         this.ukphone = ukphone;
@@ -32,9 +32,9 @@ public class Word {
         this.status = status;
     }
 
-    public Word(int id, int wtype, String word, String usphone, String ukphone, String mean, String sentence, int status, Date review) {
+    public Word(int id, int bookid, String word, String usphone, String ukphone, String mean, String sentence, int status, Date review) {
         this.id = id;
-        this.wtype = wtype;
+        this.bookid = bookid;
         this.word = word;
         this.usphone = usphone;
         this.ukphone = ukphone;
@@ -52,12 +52,12 @@ public class Word {
         this.id = id;
     }
 
-    public int getWtype() {
-        return wtype;
+    public int getBookid() {
+        return bookid;
     }
 
-    public void setWtype(int wtype) {
-        this.wtype = wtype;
+    public void setBookid(int bookid) {
+        this.bookid = bookid;
     }
 
     public String getWord() {

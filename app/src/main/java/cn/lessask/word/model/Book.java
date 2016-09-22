@@ -9,12 +9,14 @@ import android.os.Parcelable;
 public class Book  implements Parcelable {
     private int bookid;
     private String name;
+    private int num;        //单词个数
     private float completeness;
     private int iscurrent;
 
-    public Book(int bookid,String name,float completeness,int iscurrent) {
+    public Book(int bookid,String name,int num,float completeness,int iscurrent) {
         this.bookid=bookid;
         this.name = name;
+        this.num=num;
         this.completeness=completeness;
         this.iscurrent=iscurrent;
     }
@@ -28,6 +30,7 @@ public class Book  implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeInt(bookid);
         dest.writeString(name);
+        dest.writeInt(num);
         dest.writeFloat(completeness);
         dest.writeInt(iscurrent);
     }
@@ -36,15 +39,24 @@ public class Book  implements Parcelable {
          public Book createFromParcel(Parcel in) {
              int bookid=in.readInt();
              String name = in.readString();
+             int num=in.readInt();
              float completeness = in.readFloat();
              int iscurrent = in.readInt();
-             return new Book(bookid,name,completeness,iscurrent);
+             return new Book(bookid,name,num,completeness,iscurrent);
          }
 
          public Book[] newArray(int size) {
              return new Book[size];
          }
     };
+
+    public int getNum() {
+        return num;
+    }
+
+    public void setNum(int num) {
+        this.num = num;
+    }
 
     public float getCompleteness() {
         return completeness;

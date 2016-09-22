@@ -129,11 +129,12 @@ public class WordActivity extends AppCompatActivity {
     }
 
     private void gotoLean(){
-        learnWords=getGroupOfWords(user.getUserid(),1);
+        int bookid = user.getBookid();
+        learnWords=getGroupOfWords(user.getUserid(),bookid);
 
         Log.e(TAG, "notSyncWords :" + notSyncWords.toString());
         if(notSyncWords.length()>0){
-            downloadWords(user.getUserid(),user.getToken(),1,notSyncWords.toString());
+            downloadWords(user.getUserid(),user.getToken(),bookid,notSyncWords.toString());
             notSyncWords.delete(0,notSyncWords.length());
         }else {
             showWord();
@@ -196,7 +197,7 @@ public class WordActivity extends AppCompatActivity {
         }
     }
 
-    private void downloadWords(final int userid,final String token,final int wtype,final String wordsStr){
+    private void downloadWords(final int userid,final String token,final int bookid,final String wordsStr){
         final LoadingDialog loadingDialog = new LoadingDialog(WordActivity.this);
         //loadingDialog
         Log.e(TAG, "downloadWrods:"+wordsStr);
@@ -254,7 +255,7 @@ public class WordActivity extends AppCompatActivity {
             public void setPostData(Map datas) {
                 datas.put("userid", ""+userid);
                 datas.put("token", token);
-                datas.put("wtype",""+wtype);
+                datas.put("bookid",""+bookid);
                 datas.put("words", wordsStr);
             }
         });
@@ -264,17 +265,17 @@ public class WordActivity extends AppCompatActivity {
 
 
 
-    private ArrayList<Word> getGroupOfWords(int userid,int wtype){
-        Log.e(TAG,"getGroupOfWords");
+    private ArrayList<Word> getGroupOfWords(int userid,int bookid){
+        Log.e(TAG,"getGroupOfWords userid:"+userid+", bookid:"+bookid);
         ArrayList<Word> words = new ArrayList<>();
         //String [] timeDelta = new String[]{"-5 minute","-30 minute","-1 hour","-12 hour","-1 day"};
         String [] timeDelta = new String[]{"-5 minute","-30 minute","-480 minute","-720 minute"};
         //i对应的就是status的值
         for(int i=0,size=timeDelta.length;i<size;i++) {
-            String reviewSql = "select id,word,usphone,ukphone,mean,sentence,review from t_words where userid=? and wtype=? and status=? and review<strftime('%s','now', '"+timeDelta[i]+"') order by review limit ?";
+            String reviewSql = "select id,word,usphone,ukphone,mean,sentence,review from t_words where userid=? and bookid=? and status=? and review<strftime('%s','now', '"+timeDelta[i]+"') order by review limit ?";
             int limit=7-words.size();
             int status=i+1;
-            Cursor cursor = globalInfo.getDb(WordActivity.this).rawQuery(reviewSql, new String[]{"" + userid, "" + wtype,""+status,""+limit});
+            Cursor cursor = globalInfo.getDb(WordActivity.this).rawQuery(reviewSql, new String[]{"" + userid, "" + bookid,""+status,""+limit});
             Log.e(TAG, "review status:"+status+", size:"+cursor.getCount());
             while (cursor.moveToNext()) {
                 int id = cursor.getInt(0);
@@ -292,7 +293,7 @@ public class WordActivity extends AppCompatActivity {
                     else
                         notSyncWords.append(wordStr);
                 }
-                Word word = new Word(id, wtype, wordStr, usphone, ukphone, mean, sentence, status);
+                Word word = new Word(id, bookid, wordStr, usphone, ukphone, mean, sentence, status);
                 words.add(word);
             }
             if(words.size()>=7)
@@ -302,8 +303,8 @@ public class WordActivity extends AppCompatActivity {
         int remain = 7-words.size();
         if(remain>0){
             int status=0;
-            String newSql = "select id,word,usphone,ukphone,mean,sentence from t_words where userid=? and wtype=? and review is null order by id limit ?";
-            Cursor cursor = globalInfo.getDb(WordActivity.this).rawQuery(newSql,new String[]{""+userid,""+wtype,""+remain});
+            String newSql = "select id,word,usphone,ukphone,mean,sentence from t_words where userid=? and bookid=? and review is null order by id limit ?";
+            Cursor cursor = globalInfo.getDb(WordActivity.this).rawQuery(newSql,new String[]{""+userid,""+bookid,""+remain});
             while (cursor.moveToNext()){
                 int id =cursor.getInt(0);
                 String wordStr =cursor.getString(1);
@@ -320,7 +321,7 @@ public class WordActivity extends AppCompatActivity {
                         notSyncWords.append(wordStr);
                 }
 
-                Word word=new Word(id,wtype,wordStr,usphone,ukphone,mean,sentence,status);
+                Word word=new Word(id,bookid,wordStr,usphone,ukphone,mean,sentence,status);
                 words.add(word);
             }
         }
@@ -340,7 +341,7 @@ public class WordActivity extends AppCompatActivity {
             if(r>0.5)
                 return 1;
             else if(r<0.5)
-                return  -1;
+                return -1;
             else
                 return 0;
         }

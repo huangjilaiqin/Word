@@ -44,7 +44,7 @@ public class ServiceCrack extends Service{
     };
     private Timer timer=new Timer();
     //从本地加载
-    private int userid,wtype;
+    private int userid,bookid;
     private NotificationManager manager;
 
     @Override
@@ -54,7 +54,7 @@ public class ServiceCrack extends Service{
         SharedPreferences sp = this.getSharedPreferences("SP", MODE_PRIVATE);
         manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         userid = sp.getInt("userid", 0);
-        wtype = sp.getInt("wtype", 1);
+        bookid = sp.getInt("bookid", 1);
         timer.schedule(timerTask,0,600000);
     }
 
@@ -95,9 +95,9 @@ public class ServiceCrack extends Service{
         //i对应的就是status的值
         int currentReviewSize=0;
         for(int i=0,size=timeDelta.length;i<size;i++) {
-            String reviewSql = "select id,word,usphone,ukphone,mean,sentence,review from t_words where userid=? and wtype=? and status=? and review<strftime('%s','now', '"+timeDelta[i]+"')";
+            String reviewSql = "select id,word,usphone,ukphone,mean,sentence,review from t_words where userid=? and bookid=? and status=? and review<strftime('%s','now', '"+timeDelta[i]+"')";
             int status=i+1;
-            Cursor cursor = globalInfo.getDb(getApplicationContext()).rawQuery(reviewSql, new String[]{"" + userid, "" + wtype,""+status});
+            Cursor cursor = globalInfo.getDb(getApplicationContext()).rawQuery(reviewSql, new String[]{"" + userid, "" + bookid,""+status});
             currentReviewSize+=cursor.getCount();
         }
         return currentReviewSize;

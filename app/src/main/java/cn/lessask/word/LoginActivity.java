@@ -150,7 +150,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onError(VolleyError error) {
                 loadingDialog.cancel();
-                Toast.makeText(LoginActivity.this,  error.toString(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(LoginActivity.this,  "网络异常", Toast.LENGTH_SHORT).show();
             }
             @Override
             public void setPostData(Map datas) {

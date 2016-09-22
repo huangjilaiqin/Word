@@ -58,11 +58,9 @@ public class BookAdapter extends BaseRecyclerAdapter<Book, BookAdapter.MyViewHol
         if(data.getIscurrent()==1){
             //myHolder.iscurrent.setImageResource(context.getResources().getI(R.id.qq_login));
             myHolder.iscurrent.setChecked(true);
-            Log.e(TAG, "iscurrent position:"+position);
         }else{
             myHolder.iscurrent.setChecked(false);
         }
-        Log.e(TAG, "onBind"+position+", "+myHolder.iscurrent.isChecked());
 
         myHolder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -100,15 +98,12 @@ public class BookAdapter extends BaseRecyclerAdapter<Book, BookAdapter.MyViewHol
                 public void onClick(View v) {
                     boolean isSelected=iscurrent.isSelected();
                     List<Book> books=BookAdapter.this.getList();
-                    for(int i=0,size=books.size();i<size;i++){
-                        Log.e(TAG, "before iscurrent "+i+","+books.get(i).getIscurrent());
-                    }
+
                     Book book;
                     for(int i=0,size=books.size();i<size;i++){
                         book = books.get(i);
                         if(book.getIscurrent()==1){
                             book.setIscurrent(0);
-                            Log.e(TAG, "clear"+i);
                             BookAdapter.this.notifyItemChanged(i);
                         }else {
                             book.setIscurrent(0);

@@ -189,7 +189,7 @@ public class MainActivity extends AppCompatActivity {
                 if(bookid>0){
                     //检查t_words是否下载了相应的词库
                     String[] where = new String[]{""+user.getUserid(),""+bookid};
-                    Cursor cursor = globalInfo.getDb(MainActivity.this).rawQuery("select count(id) as num from t_words where userid=? and wtype=?",where);
+                    Cursor cursor = globalInfo.getDb(MainActivity.this).rawQuery("select count(id) as num from t_words where userid=? and bookid=?",where);
                     if(cursor.getCount()==0)
                         changeList(user.getUserid(),user.getToken(),0,bookid);
                 }
@@ -197,8 +197,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void changeList(final int userid,final String token,final int id,final int wtype){
-        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/changelist", WordList.class, new GsonRequest.PostGsonRequest<WordList>() {
+    private void changeList(final int userid,final String token,final int id,final int bookid){
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/changebook", WordList.class, new GsonRequest.PostGsonRequest<WordList>() {
             @Override
             public void onStart() {}
             @Override
@@ -223,7 +223,7 @@ public class MainActivity extends AppCompatActivity {
                                 values.put("id",info[0]);
                                 values.put("word",info[1]);
                                 values.put("userid",userid);
-                                values.put("wtype",wtype);
+                                values.put("bookid",bookid);
                                 globalInfo.getDb(MainActivity.this).insert("t_words",null,values);
                             }
                             Log.e(TAG, "insert done");
@@ -236,11 +236,11 @@ public class MainActivity extends AppCompatActivity {
                     Log.e(TAG, "size:"+num);
                 }
                 cursor.close();
-                //设置wtype
+                //设置bookid
                 SharedPreferences sp = MainActivity.this.getSharedPreferences("SP", MODE_PRIVATE);
                 //存入数据
                 SharedPreferences.Editor editor = sp.edit();
-                editor.putInt("wtype", wtype);
+                editor.putInt("bookid", bookid);
                 editor.commit();
             }
 
@@ -253,7 +253,7 @@ public class MainActivity extends AppCompatActivity {
                 datas.put("userid", "" + userid);
                 datas.put("token", token);
                 datas.put("id",""+id);
-                datas.put("wtype",""+wtype);
+                datas.put("bookid",""+bookid);
             }
         });
         VolleyHelper.getInstance().addToRequestQueue(gsonRequest);
@@ -329,7 +329,7 @@ public class MainActivity extends AppCompatActivity {
         //db.execSQL("drop table t_words");
         //db.execSQL("create table t_user(userid INTEGER primary key,token text,nickname text,headimg text,gender text)");
         //db.execSQL("create table t_books(userid integer,bookid integer,completeness real,current integer)");
-        db.execSQL("create table t_words(`id` INTEGER primary key,`userid` INTEGER not null,`wtype` integer not null,`word` text not null,`usphone` text default '',`ukphone` text default '',mean text default '',sentence text default '',`review` TIMESTAMP,`status` tinyint not null default 0,`sync` tinyint not null default 1)");
+        db.execSQL("create table t_words(`id` INTEGER primary key,`userid` INTEGER not null,`bookid` integer not null,`word` text not null,`usphone` text default '',`ukphone` text default '',mean text default '',sentence text default '',`review` TIMESTAMP,`status` tinyint not null default 0,`sync` tinyint not null default 1)");
 
         Log.e(TAG, "create db end");
 
@@ -358,7 +358,7 @@ public class MainActivity extends AppCompatActivity {
                     if(bookid>0){
                         //检查t_words是否下载了相应的词库
                         String[] where = new String[]{""+user.getUserid(),""+bookid};
-                        Cursor cursor = globalInfo.getDb(MainActivity.this).rawQuery("select count(id) as num from t_words where userid=? and wtype=?",where);
+                        Cursor cursor = globalInfo.getDb(MainActivity.this).rawQuery("select count(id) as num from t_words where userid=? and bookid=?",where);
                         if(cursor.getCount()==0)
                             changeList(user.getUserid(),user.getToken(),0,bookid);
                     }
