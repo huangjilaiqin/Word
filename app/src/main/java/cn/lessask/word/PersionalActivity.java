@@ -37,6 +37,12 @@ public class PersionalActivity extends AppCompatActivity {
 
             }
         });
+        findViewById(R.id.purch).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
 
         download=(Button)findViewById(R.id.download);
         download.setOnClickListener(new View.OnClickListener() {
