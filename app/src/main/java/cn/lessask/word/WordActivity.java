@@ -532,7 +532,7 @@ public class WordActivity extends AppCompatActivity {
         ArrayList<String> answers = new ArrayList<>();
 
         int minId = id-15;
-        Cursor cursor = globalInfo.getDb(WordActivity.this).rawQuery("select mean from t_words where id<? and id>? order by random()",new String[]{""+id,""+minId});
+        Cursor cursor = globalInfo.getDb(WordActivity.this).rawQuery("select mean from t_words where id<? and id>? and mean!='' order by random()",new String[]{""+id,""+minId});
         int count = cursor.getCount();
         if(count>=3){
             for(int i=0;i<3;i++){
@@ -854,6 +854,7 @@ public class WordActivity extends AppCompatActivity {
 
         ContentValues values = new ContentValues();
         values.put("status",status);
+        values.put("sync",0);
         values.put("review",review.getTime()/1000);
         String where = "userid=? and id=?";
         String[] whereArgs = new String[]{""+userid,""+word.getId()};
@@ -919,6 +920,25 @@ public class WordActivity extends AppCompatActivity {
         }catch (IOException e){
             Log.e(TAG, "playMp3 error:"+e);
         }
+    }
+
+    private void syncWords(int userid,int bookid){
+        String sql = "select id,status,review from t_words_list where userid=? and bookid=? and sync=0";
+        Cursor cursor = globalInfo.getDb(WordActivity.this).rawQuery(sql, new String[]{"" + userid, "" + bookid});
+        StringBuilder builder = new StringBuilder();
+        int count = cursor.getCount();
+        for(int i=0;i<count;i++){
+            cursor.moveToNext();
+            builder.append(cursor.getInt(0));
+            builder.append(",");
+            builder.append(cursor.getInt(1));
+            builder.append(",");
+            builder.append(cursor.getInt(2));
+            if(i+1<count){
+                builder.append(";");
+            }
+        }
+
     }
 }
 
