@@ -38,6 +38,7 @@ import at.grabner.circleprogress.CircleProgressView;
 import at.grabner.circleprogress.TextMode;
 import cn.lessask.word.dialog.LoadingDialog;
 import cn.lessask.word.model.ArrayListResponse;
+import cn.lessask.word.model.Response;
 import cn.lessask.word.model.User;
 import cn.lessask.word.model.Word;
 import cn.lessask.word.net.GsonRequest;
@@ -195,6 +196,7 @@ public class WordActivity extends AppCompatActivity {
             learnIndex=0;
             //return false;
         }
+        syncWords(user.getUserid(),user.getBookid());
     }
 
     private void downloadWords(final int userid,final String token,final int bookid,final String wordsStr){
@@ -923,7 +925,7 @@ public class WordActivity extends AppCompatActivity {
     }
 
     private void syncWords(int userid,int bookid){
-        String sql = "select id,status,review from t_words_list where userid=? and bookid=? and sync=0";
+        String sql = "select id,status,review from t_words where userid=? and bookid=? and sync=0";
         Cursor cursor = globalInfo.getDb(WordActivity.this).rawQuery(sql, new String[]{"" + userid, "" + bookid});
         StringBuilder builder = new StringBuilder();
         int count = cursor.getCount();
@@ -938,7 +940,66 @@ public class WordActivity extends AppCompatActivity {
                 builder.append(";");
             }
         }
+        Log.e(TAG, "sync:"+builder.toString());
+        Type type = new TypeToken<ArrayListResponse<Word>>() {}.getType();
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/upwordstatus", Response.class, new GsonRequest.PostGsonRequest<ArrayListResponse>() {
+            @Override
+            public void onStart() {
+                loadingDialog.show();
+            }
+            @Override
+            public void onResponse(ArrayListResponse resp) {
+                loadingDialog.cancel();
+                if(resp.getError()!=null && resp.getError()!="" || resp.getErrno()!=0){
+                    if(resp.getErrno()==601){
+                        Intent intent = new Intent(WordActivity.this, LoginActivity.class);
+                        startActivityForResult(intent, 1);
+                    }else {
+                        Toast.makeText(WordActivity.this, "changeList error:" + resp.getError(), Toast.LENGTH_SHORT).show();
+                    }
+                }else {
+                    //本地存储
+                    ArrayList<Word> words = resp.getDatas();
+                    for(int i=0,size=words.size();i<size;i++){
+                        Word word = words.get(i);
+                        ContentValues values = new ContentValues();
+                        values.put("usphone",word.getUsphone());
+                        values.put("ukphone",word.getUkphone());
+                        values.put("mean",word.getMean());
+                        values.put("sentence",word.getSentence());
+                        String where = "userid=? and id=?";
+                        String[] whereArgs = new String[]{""+userid,""+word.getId()};
+                        globalInfo.getDb(WordActivity.this).update("t_words",values,where,whereArgs);
 
+                        for(int j=0;j<learnWords.size();j++){
+                            Word w = learnWords.get(j);
+                            if(w.getId()==word.getId()){
+                                w.setUsphone(word.getUsphone());
+                                w.setUkphone(word.getUkphone());
+                                w.setMean(word.getMean());
+                                w.setSentence(word.getSentence());
+                            }
+                        }
+                    }
+                }
+                showWord();
+                Log.e(TAG, "downloadWords");
+            }
+
+            @Override
+            public void onError(VolleyError error) {
+                loadingDialog.cancel();
+                Toast.makeText(WordActivity.this,  error.toString(), Toast.LENGTH_SHORT).show();
+            }
+            @Override
+            public void setPostData(Map datas) {
+                datas.put("userid", ""+userid);
+                datas.put("token", token);
+                datas.put("bookid",""+bookid);
+                datas.put("words", wordsStr);
+            }
+        });
+        VolleyHelper.getInstance().addToRequestQueue(gsonRequest);
     }
 }
 
