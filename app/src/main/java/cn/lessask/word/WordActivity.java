@@ -11,6 +11,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -159,6 +160,16 @@ public class WordActivity extends AppCompatActivity {
         timer.schedule(task,time);
     }
 
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
+            syncWords(user.getUserid(),user.getBookid());
+            finish();
+            return true;
+        }else
+            return super.onKeyDown(keyCode, event);
+    }
+
     private void showWord(){
         if(learnIndex<learnWords.size()){
             currentWord = learnWords.get(learnIndex);
@@ -195,8 +206,8 @@ public class WordActivity extends AppCompatActivity {
             setWordGroupLayout(learnWords);
             learnIndex=0;
             //return false;
+            syncWords(user.getUserid(),user.getBookid());
         }
-        syncWords(user.getUserid(),user.getBookid());
     }
 
     private void downloadWords(final int userid,final String token,final int bookid,final String wordsStr){
@@ -924,31 +935,39 @@ public class WordActivity extends AppCompatActivity {
         }
     }
 
-    private void syncWords(int userid,int bookid){
+    private void syncWords(final int userid, final int bookid){
         String sql = "select id,status,review from t_words where userid=? and bookid=? and sync=0";
         Cursor cursor = globalInfo.getDb(WordActivity.this).rawQuery(sql, new String[]{"" + userid, "" + bookid});
         StringBuilder builder = new StringBuilder();
+        StringBuilder idsBuilder = new StringBuilder();
         int count = cursor.getCount();
+        if(count==0)
+            return;
         for(int i=0;i<count;i++){
             cursor.moveToNext();
-            builder.append(cursor.getInt(0));
+            int id = cursor.getInt(0);
+            builder.append(id);
+            idsBuilder.append(id);
             builder.append(",");
             builder.append(cursor.getInt(1));
             builder.append(",");
             builder.append(cursor.getInt(2));
             if(i+1<count){
                 builder.append(";");
+                idsBuilder.append(",");
             }
         }
-        Log.e(TAG, "sync:"+builder.toString());
-        Type type = new TypeToken<ArrayListResponse<Word>>() {}.getType();
-        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/upwordstatus", Response.class, new GsonRequest.PostGsonRequest<ArrayListResponse>() {
+        final String syncDatas=builder.toString();
+        final String syncIds=idsBuilder.toString();
+        Log.e(TAG, "sync:"+syncDatas);
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/upwordstatus", Response.class, new GsonRequest.PostGsonRequest<Response>() {
+            final LoadingDialog loadingDialog = new LoadingDialog(WordActivity.this);
             @Override
             public void onStart() {
                 loadingDialog.show();
             }
             @Override
-            public void onResponse(ArrayListResponse resp) {
+            public void onResponse(Response resp) {
                 loadingDialog.cancel();
                 if(resp.getError()!=null && resp.getError()!="" || resp.getErrno()!=0){
                     if(resp.getErrno()==601){
@@ -957,33 +976,11 @@ public class WordActivity extends AppCompatActivity {
                     }else {
                         Toast.makeText(WordActivity.this, "changeList error:" + resp.getError(), Toast.LENGTH_SHORT).show();
                     }
-                }else {
-                    //本地存储
-                    ArrayList<Word> words = resp.getDatas();
-                    for(int i=0,size=words.size();i<size;i++){
-                        Word word = words.get(i);
-                        ContentValues values = new ContentValues();
-                        values.put("usphone",word.getUsphone());
-                        values.put("ukphone",word.getUkphone());
-                        values.put("mean",word.getMean());
-                        values.put("sentence",word.getSentence());
-                        String where = "userid=? and id=?";
-                        String[] whereArgs = new String[]{""+userid,""+word.getId()};
-                        globalInfo.getDb(WordActivity.this).update("t_words",values,where,whereArgs);
-
-                        for(int j=0;j<learnWords.size();j++){
-                            Word w = learnWords.get(j);
-                            if(w.getId()==word.getId()){
-                                w.setUsphone(word.getUsphone());
-                                w.setUkphone(word.getUkphone());
-                                w.setMean(word.getMean());
-                                w.setSentence(word.getSentence());
-                            }
-                        }
-                    }
+                }else{
+                    String updateSql = "update t_words set sync=1 where userid=? and bookid=? and id in ("+syncIds+")";
+                    Cursor cursor=globalInfo.getDb(WordActivity.this).rawQuery(updateSql, new String[]{""+userid,""+bookid});
+                    Log.e(TAG, "sync ok:"+cursor.getCount()+", "+syncIds);
                 }
-                showWord();
-                Log.e(TAG, "downloadWords");
             }
 
             @Override
@@ -993,10 +990,9 @@ public class WordActivity extends AppCompatActivity {
             }
             @Override
             public void setPostData(Map datas) {
-                datas.put("userid", ""+userid);
-                datas.put("token", token);
-                datas.put("bookid",""+bookid);
-                datas.put("words", wordsStr);
+                datas.put("userid", ""+user.getUserid());
+                datas.put("token", user.getToken());
+                datas.put("datas",syncDatas);
             }
         });
         VolleyHelper.getInstance().addToRequestQueue(gsonRequest);
