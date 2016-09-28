@@ -82,32 +82,14 @@
                 android:textSize="12dp"
                 android:text="已离线"
                 />
-            <at.grabner.circleprogress.CircleProgressView
-                android:id="@+id/timer"
-                android:layout_marginTop="8dp"
+            <TextView
+                android:id="@+id/offline_rate"
                 android:layout_centerVertical="true"
                 android:layout_toLeftOf="@id/download"
                 android:layout_marginRight="8dp"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                CircleProgressView:cpv_barWidth="3dp"
-                CircleProgressView:cpv_rimWidth="3dp"
-                CircleProgressView:cpv_value="0"
-                CircleProgressView:cpv_maxValue="100"
-                CircleProgressView:cpv_barColor="#232323"
-                CircleProgressView:cpv_rimColor="#00000000"
-                CircleProgressView:cpv_textColor="#998877"
-                CircleProgressView:cpv_unitColor="#187854"
-                CircleProgressView:cpv_spinColor="#883366"
-
-                CircleProgressView:cpv_contourSize="0dp"
-                CircleProgressView:cpv_autoTextSize="true"
-                CircleProgressView:cpv_seekMode="true"
-                CircleProgressView:cpv_unit="%"
-                CircleProgressView:cpv_unitPosition="right_top"
-                CircleProgressView:cpv_unitScale="1"
-                CircleProgressView:cpv_textScale="1"
-                CircleProgressView:cpv_showUnit="false"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="24.32%"
                 />
         </RelativeLayout>
         <View
