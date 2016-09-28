@@ -8,6 +8,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.os.Binder;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -20,13 +22,16 @@ import cn.lessask.word.util.GlobalInfo;
 /**
  * Created by laiqin on 16/9/16.
  */
-public class ServiceCrack extends Service{
+public class ServiceCrack extends Service implements ServiceInterFace{
     private GlobalInfo globalInfo = GlobalInfo.getInstance();
     private int reviewSize=0;
+    private ServiceBider serviceBider;
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        if(serviceBider==null)
+            serviceBider=new ServiceBider();
+        return serviceBider;
     }
 
     private TimerTask timerTask = new TimerTask() {
@@ -101,5 +106,47 @@ public class ServiceCrack extends Service{
             currentReviewSize+=cursor.getCount();
         }
         return currentReviewSize;
+    }
+
+    private float calOfflineRate(int userid,int bookid){
+        String allSql = "select count(id) as num from t_words where userid=? and bookid=?";
+        SQLiteDatabase db = globalInfo.getDb(getBaseContext());
+        Cursor cursor = db.rawQuery(allSql, new String[]{"" + userid, "" + bookid});
+        cursor.moveToNext();
+        int allSize=cursor.getInt(0);
+        if(allSize==0)
+            return -1;
+        String sql = "select count(id) as num from t_words where userid=? and bookid=? and mean=''";
+        cursor = db.rawQuery(sql, new String[]{""+userid, ""+ bookid});
+        cursor.moveToNext();
+        int notOfflineSize=cursor.getInt(0);
+        float rate=(allSize-notOfflineSize)/(allSize*1.0f);
+        return rate;
+    }
+
+    private float downloadrate=-1;
+    @Override
+    public float getOfflineRate(int userid, int bookid) {
+        if(downloadrate==-1){
+            downloadrate=calOfflineRate(userid,bookid);
+        }
+        return downloadrate;
+    }
+
+    @Override
+    public void startDownload(int userid, int bookid, String token) {
+
+    }
+
+    class ServiceBider extends Binder implements ServiceInterFace{
+        @Override
+        public float getOfflineRate(int userid, int bookid) {
+            return ServiceCrack.this.getOfflineRate(userid,bookid);
+        }
+
+        @Override
+        public void startDownload(int userid, int bookid, String token) {
+            ServiceCrack.this.startDownload(userid,bookid,token);
+        }
     }
 }
