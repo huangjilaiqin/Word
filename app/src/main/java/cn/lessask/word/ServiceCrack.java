@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -14,15 +15,27 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import com.android.volley.Request;
+import com.android.volley.VolleyError;
+import com.google.gson.reflect.TypeToken;
+
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import cn.lessask.word.model.ArrayListResponse;
+import cn.lessask.word.model.Word;
+import cn.lessask.word.net.GsonRequest;
+import cn.lessask.word.net.VolleyHelper;
 import cn.lessask.word.util.GlobalInfo;
 
 /**
  * Created by laiqin on 16/9/16.
  */
 public class ServiceCrack extends Service implements ServiceInterFace{
+    private String TAG = ServiceCrack.class.getSimpleName();
     private GlobalInfo globalInfo = GlobalInfo.getInstance();
     private int reviewSize=0;
     private ServiceBider serviceBider;
@@ -60,7 +73,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
         manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         userid = sp.getInt("userid", 0);
         bookid = sp.getInt("bookid", 1);
-        timer.schedule(timerTask,0,600000);
+        timer.schedule(timerTask, 0, 600000);
     }
 
     private void mynotify(){
@@ -108,34 +121,145 @@ public class ServiceCrack extends Service implements ServiceInterFace{
         return currentReviewSize;
     }
 
+    private int totalWords,offlineWords;
     private float calOfflineRate(int userid,int bookid){
         String allSql = "select count(id) as num from t_words where userid=? and bookid=?";
         SQLiteDatabase db = globalInfo.getDb(getBaseContext());
         Cursor cursor = db.rawQuery(allSql, new String[]{"" + userid, "" + bookid});
         cursor.moveToNext();
-        int allSize=cursor.getInt(0);
-        if(allSize==0)
+        totalWords=cursor.getInt(0);
+        if(totalWords==0)
             return -1;
-        String sql = "select count(id) as num from t_words where userid=? and bookid=? and mean=''";
+        String sql = "select count(id) as num from t_words where userid=? and bookid=? and mean!=''";
         cursor = db.rawQuery(sql, new String[]{""+userid, ""+ bookid});
         cursor.moveToNext();
-        int notOfflineSize=cursor.getInt(0);
-        float rate=(allSize-notOfflineSize)/(allSize*1.0f);
+        offlineWords=cursor.getInt(0);
+        float rate=offlineWords/(totalWords*1.0f);
         return rate;
     }
 
-    private float downloadrate=-1;
     @Override
     public float getOfflineRate(int userid, int bookid) {
-        if(downloadrate==-1){
-            downloadrate=calOfflineRate(userid,bookid);
+        if(totalWords==0){
+            return calOfflineRate(userid,bookid);
         }
-        return downloadrate;
+        return offlineWords/(totalWords*1.0f);
+    }
+    private void downloadWords(final int userid,final String token,final int bookid,final String wordsStr){
+        Type type = new TypeToken<ArrayListResponse<Word>>() {}.getType();
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/downloadwords", type, new GsonRequest.PostGsonRequest<ArrayListResponse>() {
+            @Override
+            public void onStart() {
+                Log.e(TAG, "service stat download words");
+            }
+            @Override
+            public void onResponse(ArrayListResponse resp) {
+                if(resp.getError()!=null && resp.getError()!="" || resp.getErrno()!=0){
+                    if(resp.getErrno()!=0 || resp.getError()!=""){
+                        Log.e(TAG, "service downloadWords error"+resp.getError());
+                    }
+                }else {
+                    //本地存储
+                    ArrayList<Word> words = resp.getDatas();
+                    SQLiteDatabase db=globalInfo.getDb(getBaseContext());
+                    for(int i=0,size=words.size();i<size;i++){
+                        Word word = words.get(i);
+                        ContentValues values = new ContentValues();
+                        values.put("usphone",word.getUsphone());
+                        values.put("ukphone",word.getUkphone());
+                        values.put("mean",word.getMean());
+                        values.put("sentence",word.getSentence());
+                        String where = "userid=? and id=?";
+                        String[] whereArgs = new String[]{""+userid,""+word.getId()};
+                        db.update("t_words", values, where, whereArgs);
+                    }
+                    offlineWords+=words.size();
+                    Log.e(TAG, "service download finish");
+                }
+                downloading=false;
+            }
+
+            @Override
+            public void onError(VolleyError error) {
+                downloading=false;
+                Log.e(TAG, "service downloadWords error:"+error.getMessage());
+            }
+            @Override
+            public void setPostData(Map datas) {
+                datas.put("userid", ""+userid);
+                datas.put("token", token);
+                datas.put("bookid",""+bookid);
+                datas.put("words", wordsStr);
+            }
+        });
+        VolleyHelper.getInstance().addToRequestQueue(gsonRequest);
+    }
+
+    private boolean canDownload=false;
+    private boolean downloading=false;
+    private boolean downloadFinish=false;
+
+    private String getNotDownloadWords(int wordSize){
+        String newSql = "select id,word,usphone,ukphone,mean,sentence from t_words where userid=? and bookid=? and mean='' order by id limit ?";
+        Cursor cursor = globalInfo.getDb(getBaseContext()).rawQuery(newSql,new String[]{""+userid,""+bookid,""+wordSize});
+        StringBuilder builder = new StringBuilder();
+        for(int i=0,count=cursor.getCount();i<count;i++) {
+            cursor.moveToNext();
+            int id = cursor.getInt(0);
+            String wordStr = cursor.getString(1);
+            builder.append(wordStr);
+            if (i + 1 < count)
+                builder.append(",");
+        }
+        return builder.toString();
     }
 
     @Override
-    public void startDownload(int userid, int bookid, String token) {
+    public void startDownload(final int userid,final String token,final int bookid) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                canDownload=true;
+                float rate = getOfflineRate(userid,bookid);
+                if(rate==1)
+                    downloadFinish=true;
+                while (canDownload && !downloadFinish){
+                    if(!downloading){
+                        //查库调下载接口
+                        String words = getNotDownloadWords(20);
+                        if(words.length()==0){
+                            canDownload=false;
+                            downloadFinish=true;
+                            break;
+                        }
+                        Log.e(TAG, "words:"+words);
+                        downloadWords(userid,token,bookid,words);
+                        //休息
+                        try {
+                            Thread.sleep(1000);
+                        }catch (Exception e){
 
+                        }
+                    }
+                }
+
+            }
+        }).start();
+
+    }
+
+    @Override
+    public boolean isDownloading() {
+        return canDownload;
+    }
+
+    @Override
+    public void stopDownload() {
+        canDownload=false;
+        downloading=false;
+        downloadFinish=false;
+        totalWords=0;
+        offlineWords=0;
     }
 
     class ServiceBider extends Binder implements ServiceInterFace{
@@ -145,8 +269,18 @@ public class ServiceCrack extends Service implements ServiceInterFace{
         }
 
         @Override
-        public void startDownload(int userid, int bookid, String token) {
-            ServiceCrack.this.startDownload(userid,bookid,token);
+        public void startDownload(int userid, String token, int bookid) {
+            ServiceCrack.this.startDownload(userid,token,bookid);
+        }
+
+        @Override
+        public void stopDownload() {
+            ServiceCrack.this.stopDownload();
+        }
+
+        @Override
+        public boolean isDownloading() {
+            return ServiceCrack.this.isDownloading();
         }
     }
 }

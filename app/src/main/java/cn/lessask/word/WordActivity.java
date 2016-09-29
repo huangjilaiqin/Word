@@ -256,7 +256,6 @@ public class WordActivity extends AppCompatActivity {
                     }
                 }
                 showWord();
-                Log.e(TAG, "downloadWords");
             }
 
             @Override
@@ -338,12 +337,7 @@ public class WordActivity extends AppCompatActivity {
                 words.add(word);
             }
         }
-        for(int i=0;i<words.size();i++)
-            Log.e(TAG, words.get(i).getWord());
         Collections.sort(words, randomComparator);
-        Log.e(TAG, "==================");
-        for(int i=0;i<words.size();i++)
-            Log.e(TAG, words.get(i).getWord());
         return words;
     }
 

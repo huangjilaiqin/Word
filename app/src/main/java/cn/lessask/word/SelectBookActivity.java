@@ -43,6 +43,7 @@ public class SelectBookActivity extends AppCompatActivity {
     private VolleyHelper volleyHelper = VolleyHelper.getInstance();
     private GlobalInfo globalInfo = GlobalInfo.getInstance();
     private User user;
+    private boolean haveChange;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,6 +58,9 @@ public class SelectBookActivity extends AppCompatActivity {
         mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Intent intent = new Intent(SelectBookActivity.this, PersionalActivity.class);
+                intent.putExtra("haveChange",haveChange);
+                SelectBookActivity.this.setResult(1,intent);
                 finish();
             }
         });
@@ -86,6 +90,9 @@ public class SelectBookActivity extends AppCompatActivity {
             @Override
             public void onItemClick(Object object) {
                 Book book = (Book)object;
+                if(book.getBookid()==user.getBookid())
+                    return;
+
                 //切换词库
                 String[] where=new String[]{""+user.getUserid(),""+book.getBookid()};
                 Log.e(TAG, ""+user.getUserid()+", "+book.getBookid());
@@ -207,6 +214,7 @@ public class SelectBookActivity extends AppCompatActivity {
                     editor.putInt("bookid", bookid);
                     editor.commit();
                     user.setBookid(bookid);
+                    haveChange=true;
                 }
             }
 

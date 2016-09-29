@@ -5,5 +5,7 @@ package cn.lessask.word;
  */
 public interface ServiceInterFace {
     float getOfflineRate(int userid,int bookid);
-    void startDownload(int userid,int bookid,String token);
+    void startDownload(int userid,String token,int bookid);
+    void stopDownload();
+    boolean isDownloading();
 }

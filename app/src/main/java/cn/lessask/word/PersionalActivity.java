@@ -40,7 +40,9 @@ public class PersionalActivity extends AppCompatActivity {
     private boolean downloading=false;
     private Thread downloadMonitor;
     private final int DOWNLOAD_UPDATE=1;
-    private final int DOWNLOAD_FINISH=2;
+    private final int DOWNLOAD_STOP_UPDATE=2;
+
+    private final int CHANGE_BOOK=1;
 
     private ServiceInterFace serviceInterFace;
     private Intent serviceIntent;
@@ -49,21 +51,52 @@ public class PersionalActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what){
+                //离线中
                 case DOWNLOAD_UPDATE:
                     float rate  =(float)msg.obj;
                     String rateStr = new BigDecimal(rate).setScale(2,BigDecimal.ROUND_HALF_UP).toString();
-                    offlineRate.setVisibility(View.VISIBLE);
-                    offlineRate.setText(rateStr + "%");
-                    Log.e(TAG, "download updte");
+                    if(rateStr.equals("100.00")){
+                        offlineRate.setVisibility(View.INVISIBLE);
+                        download.setEnabled(false);
+                        download.setText("已离线");
+                    }else{
+                        offlineRate.setVisibility(View.VISIBLE);
+                        offlineRate.setText(rateStr + "%");
+                        download.setEnabled(true);
+                        download.setText("暂停离线");
+                    }
                     break;
-                case DOWNLOAD_FINISH:
-                    offlineRate.setVisibility(View.INVISIBLE);
-                    download.setEnabled(false);
-                    download.setText("已离线");
+                //不是离线中
+                case DOWNLOAD_STOP_UPDATE:
+                    rate  =(float)msg.obj;
+                    rateStr = new BigDecimal(rate).setScale(2,BigDecimal.ROUND_HALF_UP).toString();
+                    if(rateStr.equals("100.00")){
+                        offlineRate.setVisibility(View.INVISIBLE);
+                        download.setEnabled(false);
+                        download.setText("已离线");
+                    }else{
+                        offlineRate.setVisibility(View.VISIBLE);
+                        offlineRate.setText(rateStr + "%");
+                        download.setEnabled(true);
+                        download.setText("离线");
+                    }
                     break;
             }
         }
     };
+
+    private TimerTask timerTask = new TimerTask() {
+        @Override
+        public void run() {
+            float rate = serviceInterFace.getOfflineRate(user.getUserid(), user.getBookid());
+            Log.e(TAG, "service offlinerate:" + rate);
+            Message message = new Message();
+            message.what = DOWNLOAD_UPDATE;
+            message.obj = rate * 100;
+            handler.sendMessage(message);
+        }
+    };
+    private Timer timer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,8 +111,7 @@ public class PersionalActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(PersionalActivity.this, SelectBookActivity.class);
-                startActivity(intent);
-
+                startActivityForResult(intent, CHANGE_BOOK);
             }
         });
         findViewById(R.id.purch).setOnClickListener(new View.OnClickListener() {
@@ -88,16 +120,42 @@ public class PersionalActivity extends AppCompatActivity {
 
             }
         });
+        loadHeadImg(user.getHeadimg());
 
         download=(Button)findViewById(R.id.download);
         download.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 //调用服务进行离线
-
+                if (download.getText().equals("离线")) {
+                    serviceInterFace.startDownload(user.getUserid(), user.getToken(), user.getBookid());
+                    download.setText("暂停离线");
+                    //timer.schedule(timerTask, 0, 1000);
+                    monitorDownload();
+                    /*
+                    if(downloadMonitor==null) {
+                        downloadMonitor = new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                float rate = serviceInterFace.getOfflineRate(user.getUserid(), user.getBookid());
+                                Log.e(TAG, "service offlinerate:" + rate);
+                                Message message = new Message();
+                                message.what = DOWNLOAD_UPDATE;
+                                message.obj = rate * 100;
+                                handler.sendMessage(message);
+                            }
+                        });
+                    }
+                    downloadMonitor.start();
+                    */
+                } else if (download.getText().equals("暂停离线")) {
+                    serviceInterFace.stopDownload();
+                    download.setText("离线");
+                    //downloadMonitor.stop();
+                    timer.cancel();
+                }
             }
         });
-        loadHeadImg(user.getHeadimg());
 
         SharedPreferences sp = PersionalActivity.this.getSharedPreferences("SP", MODE_PRIVATE);
         if(!sp.getBoolean("offline",false)){
@@ -121,33 +179,24 @@ public class PersionalActivity extends AppCompatActivity {
             download.setEnabled(false);
             download.setText("已离线");
         }
-
-        /*
-        downloading=true;
-        if(downloading){
-            final Timer timer = new Timer();
-            TimerTask task = new TimerTask() {
-                @Override
-                public void run() {
-                    //从服务中获取离线进度
-                    float rate=1f;
-                    if(rate==1){
-                        Message message = new Message();
-                        message.what = DOWNLOAD_FINISH;
-                        handler.sendMessage(message);
-                        timer.cancel();
-                    }else {
-                        Message message = new Message();
-                        message.what = DOWNLOAD_UPDATE;
-                        message.obj=rate;
-                        handler.sendMessage(message);
-                    }
-                }
-            };
-            timer.schedule(task,0,1000);
-        }
-        */
         bindService();
+    }
+
+    private void monitorDownload(){
+        TimerTask timerTask = new TimerTask() {
+            @Override
+            public void run() {
+                float rate = serviceInterFace.getOfflineRate(user.getUserid(), user.getBookid());
+                Log.e(TAG, "service offlinerate:" + rate);
+                Message message = new Message();
+                message.what = DOWNLOAD_UPDATE;
+                message.obj = rate * 100;
+                handler.sendMessage(message);
+            }
+        };
+
+        timer=new Timer();
+        timer.schedule(timerTask, 0, 1000);
     }
     private void loadHeadImg(String url){
         ImageLoader.ImageListener headImgListener = ImageLoader.getImageListener(headImg, 0, 0);
@@ -168,7 +217,6 @@ public class PersionalActivity extends AppCompatActivity {
         int notOfflineSize=cursor.getInt(0);
         float rate=(allSize-notOfflineSize)/(allSize*1.0f);
         return rate;
-
     }
 
 
@@ -176,12 +224,7 @@ public class PersionalActivity extends AppCompatActivity {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             serviceInterFace=(ServiceInterFace)service;
-            float rate=serviceInterFace.getOfflineRate(user.getUserid(),user.getBookid());
-            Log.e(TAG, "service offlinerate:"+rate);
-            Message message = new Message();
-            message.what = DOWNLOAD_UPDATE;
-            message.obj=rate*100;
-            handler.sendMessage(message);
+            checkDownloadService();
         }
 
         @Override
@@ -193,6 +236,33 @@ public class PersionalActivity extends AppCompatActivity {
         bindService(serviceIntent, serviceConnection,BIND_AUTO_CREATE);
     }
 
+    private void checkDownloadService(){
+        if(serviceInterFace.isDownloading()){
+            /*
+            downloadMonitor=new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    float rate = serviceInterFace.getOfflineRate(user.getUserid(), user.getBookid());
+                    Log.e(TAG, "service offlinerate:" + rate);
+                    Message message = new Message();
+                    message.what = DOWNLOAD_UPDATE;
+                    message.obj = rate * 100;
+                    handler.sendMessage(message);
+                }
+            });
+            downloadMonitor.start();
+            */
+            //timer.schedule(timerTask, 0, 1000);
+            monitorDownload();
+        }else {
+            float rate = serviceInterFace.getOfflineRate(user.getUserid(), user.getBookid());
+            Log.e(TAG, "service offlinerate:" + rate);
+            Message message = new Message();
+            message.what = DOWNLOAD_STOP_UPDATE;
+            message.obj = rate * 100;
+            handler.sendMessage(message);
+        }
+    }
     @Override
     protected void onStart() {
         super.onStart();
@@ -203,6 +273,12 @@ public class PersionalActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         stopService(serviceIntent);
+        if(timer!=null)
+            timer.cancel();
+        /*
+        if(downloadMonitor!=null)
+            downloadMonitor.stop();
+            */
     }
 
     @Override
@@ -210,5 +286,32 @@ public class PersionalActivity extends AppCompatActivity {
         super.onDestroy();
         //接触绑定
         unbindService(serviceConnection);
+        /*
+        if(downloadMonitor!=null)
+            downloadMonitor.stop();
+            */
+        if(timer!=null)
+            timer.cancel();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(resultCode==RESULT_OK || resultCode==RESULT_FIRST_USER) {
+            switch (requestCode) {
+                case CHANGE_BOOK:
+                    if(data.getBooleanExtra("haveChange",false)) {
+                        Log.e(TAG, "haveChange book");
+                        if (serviceInterFace != null) {
+                            serviceInterFace.stopDownload();
+                            checkDownloadService();
+                        } else {
+                            bindService();
+                        }
+                    }
+                    monitorDownload();
+                    break;
+            }
+        }
     }
 }
