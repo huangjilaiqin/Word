@@ -85,17 +85,6 @@ public class PersionalActivity extends AppCompatActivity {
         }
     };
 
-    private TimerTask timerTask = new TimerTask() {
-        @Override
-        public void run() {
-            float rate = serviceInterFace.getOfflineRate(user.getUserid(), user.getBookid());
-            Log.e(TAG, "service offlinerate:" + rate);
-            Message message = new Message();
-            message.what = DOWNLOAD_UPDATE;
-            message.obj = rate * 100;
-            handler.sendMessage(message);
-        }
-    };
     private Timer timer;
 
     @Override
@@ -132,22 +121,6 @@ public class PersionalActivity extends AppCompatActivity {
                     download.setText("暂停离线");
                     //timer.schedule(timerTask, 0, 1000);
                     monitorDownload();
-                    /*
-                    if(downloadMonitor==null) {
-                        downloadMonitor = new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                float rate = serviceInterFace.getOfflineRate(user.getUserid(), user.getBookid());
-                                Log.e(TAG, "service offlinerate:" + rate);
-                                Message message = new Message();
-                                message.what = DOWNLOAD_UPDATE;
-                                message.obj = rate * 100;
-                                handler.sendMessage(message);
-                            }
-                        });
-                    }
-                    downloadMonitor.start();
-                    */
                 } else if (download.getText().equals("暂停离线")) {
                     serviceInterFace.stopDownload();
                     download.setText("离线");
@@ -238,21 +211,7 @@ public class PersionalActivity extends AppCompatActivity {
 
     private void checkDownloadService(){
         if(serviceInterFace.isDownloading()){
-            /*
-            downloadMonitor=new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    float rate = serviceInterFace.getOfflineRate(user.getUserid(), user.getBookid());
-                    Log.e(TAG, "service offlinerate:" + rate);
-                    Message message = new Message();
-                    message.what = DOWNLOAD_UPDATE;
-                    message.obj = rate * 100;
-                    handler.sendMessage(message);
-                }
-            });
-            downloadMonitor.start();
-            */
-            //timer.schedule(timerTask, 0, 1000);
+            Log.e(TAG, "isDownloading");
             monitorDownload();
         }else {
             float rate = serviceInterFace.getOfflineRate(user.getUserid(), user.getBookid());
@@ -309,7 +268,7 @@ public class PersionalActivity extends AppCompatActivity {
                             bindService();
                         }
                     }
-                    monitorDownload();
+                    checkDownloadService();
                     break;
             }
         }
