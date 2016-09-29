@@ -58,10 +58,7 @@ public class SelectBookActivity extends AppCompatActivity {
         mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(SelectBookActivity.this, PersionalActivity.class);
-                intent.putExtra("haveChange",haveChange);
-                SelectBookActivity.this.setResult(1,intent);
-                finish();
+                onBack();
             }
         });
 
@@ -104,6 +101,12 @@ public class SelectBookActivity extends AppCompatActivity {
                 }
 
                 changeBook(user.getUserid(),user.getToken(),id,book.getBookid());
+
+                SharedPreferences sp = SelectBookActivity.this.getSharedPreferences("SP", MODE_PRIVATE);
+                SharedPreferences.Editor editor=sp.edit();
+                editor.putInt("bookid",book.getBookid());
+                editor.putString("bookName",book.getName());
+                editor.commit();
             }
         });
         //设置点击事件, 编辑动作
@@ -117,6 +120,19 @@ public class SelectBookActivity extends AppCompatActivity {
         */
         mRecyclerView.setAdapter(mRecyclerViewAdapter);
         loadBooks();
+    }
+
+    private void onBack(){
+        Intent intent = new Intent(SelectBookActivity.this, PersionalActivity.class);
+        intent.putExtra("haveChange",haveChange);
+        SelectBookActivity.this.setResult(1,intent);
+        finish();
+    }
+
+    @Override
+    public void onBackPressed() {
+        //super.onBackPressed();
+        onBack();
     }
 
     private void loadBooks(){

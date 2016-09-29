@@ -15,19 +15,16 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.android.volley.toolbox.ImageLoader;
 
-import java.awt.font.TextAttribute;
 import java.math.BigDecimal;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import cn.lessask.word.model.User;
 import cn.lessask.word.net.VolleyHelper;
-import cn.lessask.word.test.ExampleTest;
 import cn.lessask.word.util.GlobalInfo;
 
 public class PersionalActivity extends AppCompatActivity {
@@ -35,10 +32,11 @@ public class PersionalActivity extends AppCompatActivity {
     private Button download;
     private ImageView headImg;
     private TextView offlineRate;
+    private TextView bookNameTv;
     private GlobalInfo globalInfo=GlobalInfo.getInstance();
     private User user = globalInfo.getUser();
-    private boolean downloading=false;
-    private Thread downloadMonitor;
+    private SharedPreferences sp;
+
     private final int DOWNLOAD_UPDATE=1;
     private final int DOWNLOAD_STOP_UPDATE=2;
 
@@ -92,9 +90,11 @@ public class PersionalActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_persional);
         serviceIntent = new Intent(this, ServiceCrack.class);
+        sp = PersionalActivity.this.getSharedPreferences("SP", MODE_PRIVATE);
 
         headImg=(ImageView)findViewById(R.id.head_img);
         offlineRate=(TextView)findViewById(R.id.offline_rate);
+        bookNameTv=(TextView)findViewById(R.id.bookname);
 
         findViewById(R.id.change_book).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -119,39 +119,22 @@ public class PersionalActivity extends AppCompatActivity {
                 if (download.getText().equals("离线")) {
                     serviceInterFace.startDownload(user.getUserid(), user.getToken(), user.getBookid());
                     download.setText("暂停离线");
-                    //timer.schedule(timerTask, 0, 1000);
                     monitorDownload();
                 } else if (download.getText().equals("暂停离线")) {
                     serviceInterFace.stopDownload();
                     download.setText("离线");
-                    //downloadMonitor.stop();
                     timer.cancel();
                 }
             }
         });
 
-        SharedPreferences sp = PersionalActivity.this.getSharedPreferences("SP", MODE_PRIVATE);
-        if(!sp.getBoolean("offline",false)){
-            float rate = calOfflineRate(user.getUserid(),user.getBookid());
-            if(rate==1){
-                SharedPreferences.Editor editor=sp.edit();
-                editor.putBoolean("offline",true);
-                editor.commit();
-                offlineRate.setVisibility(View.INVISIBLE);
-                download.setEnabled(false);
-                download.setText("已离线");
-            }else {
-                String rateStr = new BigDecimal(rate).setScale(2,BigDecimal.ROUND_HALF_UP).toString();
-                offlineRate.setVisibility(View.VISIBLE);
-                offlineRate.setText(rateStr + "%");
-                download.setEnabled(true);
-                download.setText("离线");
-            }
-        }else {
-            offlineRate.setVisibility(View.INVISIBLE);
-            download.setEnabled(false);
-            download.setText("已离线");
+        String bookName = sp.getString("bookName","");
+        if(bookName.length()==0){
+            //根据bookid请求单词书信息
+        }else{
+            bookNameTv.setText(bookName);
         }
+
         bindService();
     }
 
@@ -160,7 +143,6 @@ public class PersionalActivity extends AppCompatActivity {
             @Override
             public void run() {
                 float rate = serviceInterFace.getOfflineRate(user.getUserid(), user.getBookid());
-                Log.e(TAG, "service offlinerate:" + rate);
                 Message message = new Message();
                 message.what = DOWNLOAD_UPDATE;
                 message.obj = rate * 100;
@@ -175,23 +157,6 @@ public class PersionalActivity extends AppCompatActivity {
         ImageLoader.ImageListener headImgListener = ImageLoader.getImageListener(headImg, 0, 0);
         VolleyHelper.getInstance().getImageLoader().get(url, headImgListener, 100, 100);
     }
-
-    private float calOfflineRate(int userid,int bookid){
-        String allSql = "select count(id) as num from t_words where userid=? and bookid=?";
-        SQLiteDatabase db = globalInfo.getDb(PersionalActivity.this);
-        Cursor cursor = db.rawQuery(allSql, new String[]{"" + userid, "" + bookid});
-        cursor.moveToNext();
-        int allSize=cursor.getInt(0);
-        if(allSize==0)
-            return -1;
-        String sql = "select count(id) as num from t_words where userid=? and bookid=? and mean=''";
-        cursor = db.rawQuery(sql, new String[]{""+userid, ""+ bookid});
-        cursor.moveToNext();
-        int notOfflineSize=cursor.getInt(0);
-        float rate=(allSize-notOfflineSize)/(allSize*1.0f);
-        return rate;
-    }
-
 
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
@@ -234,10 +199,6 @@ public class PersionalActivity extends AppCompatActivity {
         stopService(serviceIntent);
         if(timer!=null)
             timer.cancel();
-        /*
-        if(downloadMonitor!=null)
-            downloadMonitor.stop();
-            */
     }
 
     @Override
@@ -245,12 +206,14 @@ public class PersionalActivity extends AppCompatActivity {
         super.onDestroy();
         //接触绑定
         unbindService(serviceConnection);
-        /*
-        if(downloadMonitor!=null)
-            downloadMonitor.stop();
-            */
+
         if(timer!=null)
             timer.cancel();
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
     }
 
     @Override
@@ -261,6 +224,7 @@ public class PersionalActivity extends AppCompatActivity {
                 case CHANGE_BOOK:
                     if(data.getBooleanExtra("haveChange",false)) {
                         Log.e(TAG, "haveChange book");
+                        bookNameTv.setText(sp.getString("bookName", "单词书"));
                         if (serviceInterFace != null) {
                             serviceInterFace.stopDownload();
                             checkDownloadService();
@@ -268,7 +232,6 @@ public class PersionalActivity extends AppCompatActivity {
                             bindService();
                         }
                     }
-                    checkDownloadService();
                     break;
             }
         }

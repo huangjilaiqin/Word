@@ -19,6 +19,7 @@ import com.android.volley.Request;
 import com.android.volley.VolleyError;
 import com.google.gson.reflect.TypeToken;
 
+import java.io.File;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Map;
@@ -28,8 +29,10 @@ import java.util.TimerTask;
 import cn.lessask.word.model.ArrayListResponse;
 import cn.lessask.word.model.Word;
 import cn.lessask.word.net.GsonRequest;
+import cn.lessask.word.net.NetworkFileHelper;
 import cn.lessask.word.net.VolleyHelper;
 import cn.lessask.word.util.GlobalInfo;
+import cn.lessask.word.util.StringUtil;
 
 /**
  * Created by laiqin on 16/9/16.
@@ -130,7 +133,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
         totalWords=cursor.getInt(0);
         if(totalWords==0)
             return -1;
-        String sql = "select count(id) as num from t_words where userid=? and bookid=? and mean!=''";
+        String sql = "select count(id) as num from t_words where userid=? and bookid=? and offline!=2";
         cursor = db.rawQuery(sql, new String[]{""+userid, ""+ bookid});
         cursor.moveToNext();
         offlineWords=cursor.getInt(0);
@@ -162,8 +165,10 @@ public class ServiceCrack extends Service implements ServiceInterFace{
                     //本地存储
                     ArrayList<Word> words = resp.getDatas();
                     SQLiteDatabase db=globalInfo.getDb(getBaseContext());
+                    String updateSql = "update t_words set usphone=?,ukphone=?,mean=?,sentence=?,offline=offline+1 where userid=? and bookid=? and id=?";
                     for(int i=0,size=words.size();i<size;i++){
                         Word word = words.get(i);
+                        /*
                         ContentValues values = new ContentValues();
                         values.put("usphone",word.getUsphone());
                         values.put("ukphone",word.getUkphone());
@@ -172,6 +177,11 @@ public class ServiceCrack extends Service implements ServiceInterFace{
                         String where = "userid=? and id=?";
                         String[] whereArgs = new String[]{""+userid,""+word.getId()};
                         db.update("t_words", values, where, whereArgs);
+                        */
+                        String[] args = new String[]{word.getUsphone(),word.getUkphone(),word.getMean(),word.getSentence(),""+userid,""+word.getId()};
+                        db.rawQuery(updateSql,args);
+
+                        checkOffline(userid,bookid,word.getId());
                     }
                     offlineWords+=words.size();
                     Log.e(TAG, "service download finish");
@@ -199,41 +209,61 @@ public class ServiceCrack extends Service implements ServiceInterFace{
     private boolean downloading=false;
     private boolean downloadFinish=false;
 
-    private String getNotDownloadWords(int wordSize){
-        String newSql = "select id,word,usphone,ukphone,mean,sentence from t_words where userid=? and bookid=? and mean='' order by id limit ?";
+    private ArrayList<Word> getNotDownloadWords(int wordSize){
+        String newSql = "select id,word,mean from t_words where userid=? and bookid=? and offline!=2 order by id limit ?";
         Cursor cursor = globalInfo.getDb(getBaseContext()).rawQuery(newSql,new String[]{""+userid,""+bookid,""+wordSize});
         StringBuilder builder = new StringBuilder();
+        ArrayList<Word> words = new ArrayList<>();
         for(int i=0,count=cursor.getCount();i<count;i++) {
             cursor.moveToNext();
-            int id = cursor.getInt(0);
-            String wordStr = cursor.getString(1);
-            builder.append(wordStr);
-            if (i + 1 < count)
-                builder.append(",");
+            Word word = new Word();
+            word.setId(cursor.getInt(0));
+            word.setWord(cursor.getString(1));
+            word.setWord(cursor.getString(2));
+            words.add(word);
         }
-        return builder.toString();
+        return words;
     }
 
     @Override
     public void startDownload(final int userid,final String token,final int bookid) {
+        Log.e(TAG, "startDownload bookid:"+bookid);
         new Thread(new Runnable() {
             @Override
             public void run() {
                 canDownload=true;
+                downloading=false;
                 float rate = getOfflineRate(userid,bookid);
                 if(rate==1)
                     downloadFinish=true;
+                Log.e(TAG, "canDownload:"+canDownload+", downloadFinish:"+downloadFinish+", downloading:"+downloading);
                 while (canDownload && !downloadFinish){
                     if(!downloading){
                         //查库调下载接口
-                        String words = getNotDownloadWords(20);
-                        if(words.length()==0){
+                        ArrayList<Word> words = getNotDownloadWords(20);
+                        if(words.size()==0){
                             canDownload=false;
                             downloadFinish=true;
                             break;
                         }
                         Log.e(TAG, "words:"+words);
-                        downloadWords(userid,token,bookid,words);
+                        ArrayList<String> wordsStr = new ArrayList<String>();
+                        for(int i=0;i<words.size();i++){
+                            Word word = words.get(i);
+                            String mean = word.getMean();
+                            String wordStr = word.getWord();
+                            if(mean.length()==0) {
+                                wordsStr.add(wordStr);
+                            }
+                            //检查发音文件是否存在
+                            String filename=word+"_uk.mp3";
+                            File phoneFile = new File(Constant.phonePrefixPath,filename);
+                            if(!phoneFile.exists()){
+                                downloadPhone(userid,word,"uk",phoneFile);
+                            }
+                        }
+                        if(wordsStr.size()>0)
+                            downloadWords(userid,token,bookid, StringUtil.join(wordsStr,","));
                         //休息
                         try {
                             Thread.sleep(1000);
@@ -246,6 +276,56 @@ public class ServiceCrack extends Service implements ServiceInterFace{
             }
         }).start();
 
+    }
+
+    private void incrOffline(int userid,int bookid,int wid){
+        SQLiteDatabase db = globalInfo.getDb(getApplicationContext());
+        String sql = "update t_words set offline=offline+1 where userid=? and bookid=? and id=?";
+        db.rawQuery(sql, new String[]{"" + userid, "" + bookid,""+wid});
+        /*
+        sql = "select offline from t_words where userid=? and bookid=? and id=?";
+        Cursor cursor=db.rawQuery(sql, new String[]{"" + userid, "" + bookid,""+wid});
+        cursor.moveToNext();
+        int offline=cursor.getInt(0);
+        if()
+        */
+        checkOffline(userid,bookid,wid);
+    }
+    private void checkOffline(int userid,int bookid,int wid){
+        SQLiteDatabase db = globalInfo.getDb(getApplicationContext());
+        String sql = "select id from t_words where userid=? and bookid=? and id=? and offline=2";
+        Cursor cursor=db.rawQuery(sql, new String[]{"" + userid, "" + bookid,""+wid});
+        if(cursor.getCount()==1){
+            offlineWords++;
+            Log.e(TAG, "offline word:"+wid);
+        }
+    }
+
+    private void downloadPhone(final int userid,final Word word, String type, File phoneFile){
+        String url = "http://120.24.75.92:5006/word/downloadphone?word="+word.getWord()+"&type="+type;
+        final String path = phoneFile.getPath();
+        NetworkFileHelper.getInstance().startGetFile(url, path, new NetworkFileHelper.GetFileRequest() {
+            @Override
+            public void onStart() {}
+
+            @Override
+            public void onResponse(String error) {
+                File file = new File(path);
+                if (file.exists()) {
+                    Log.e(TAG, "exists:" + path);
+                } else {
+                    Log.e(TAG, "not exists:" + path);
+                }
+                //更新数据库
+                incrOffline(userid,word.getBookid(),word.getId());
+                Log.e(TAG, "download phone:"+word.getWord());
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.e(TAG, error);
+            }
+        });
     }
 
     @Override
