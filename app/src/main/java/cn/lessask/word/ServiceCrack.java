@@ -42,6 +42,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
     private GlobalInfo globalInfo = GlobalInfo.getInstance();
     private int reviewSize=0;
     private ServiceBider serviceBider;
+    private NetworkFileHelper networkFileHelper = NetworkFileHelper.getInstance();
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -133,10 +134,11 @@ public class ServiceCrack extends Service implements ServiceInterFace{
         totalWords=cursor.getInt(0);
         if(totalWords==0)
             return -1;
-        String sql = "select count(id) as num from t_words where userid=? and bookid=? and offline!=2";
+        String sql = "select count(id) as num from t_words where userid=? and bookid=? and offline=2";
         cursor = db.rawQuery(sql, new String[]{""+userid, ""+ bookid});
         cursor.moveToNext();
         offlineWords=cursor.getInt(0);
+        Log.e(TAG, "callOfflineRate totalWords:"+totalWords+", offlineWords:"+offlineWords);
         float rate=offlineWords/(totalWords*1.0f);
         return rate;
     }
@@ -168,20 +170,10 @@ public class ServiceCrack extends Service implements ServiceInterFace{
                     String updateSql = "update t_words set usphone=?,ukphone=?,mean=?,sentence=?,offline=offline+1 where userid=? and bookid=? and id=?";
                     for(int i=0,size=words.size();i<size;i++){
                         Word word = words.get(i);
-                        /*
-                        ContentValues values = new ContentValues();
-                        values.put("usphone",word.getUsphone());
-                        values.put("ukphone",word.getUkphone());
-                        values.put("mean",word.getMean());
-                        values.put("sentence",word.getSentence());
-                        String where = "userid=? and id=?";
-                        String[] whereArgs = new String[]{""+userid,""+word.getId()};
-                        db.update("t_words", values, where, whereArgs);
-                        */
-                        String[] args = new String[]{word.getUsphone(),word.getUkphone(),word.getMean(),word.getSentence(),""+userid,""+word.getId()};
-                        db.rawQuery(updateSql,args);
+                        Object[] args = new Object[]{word.getUsphone(),word.getUkphone(),word.getMean(),word.getSentence(),userid,bookid,word.getId()};
+                        db.execSQL(updateSql,args);
 
-                        checkOffline(userid,bookid,word.getId());
+                        checkOffline(userid, bookid, word.getId());
                     }
                     offlineWords+=words.size();
                     Log.e(TAG, "service download finish");
@@ -212,14 +204,13 @@ public class ServiceCrack extends Service implements ServiceInterFace{
     private ArrayList<Word> getNotDownloadWords(int wordSize){
         String newSql = "select id,word,mean from t_words where userid=? and bookid=? and offline!=2 order by id limit ?";
         Cursor cursor = globalInfo.getDb(getBaseContext()).rawQuery(newSql,new String[]{""+userid,""+bookid,""+wordSize});
-        StringBuilder builder = new StringBuilder();
         ArrayList<Word> words = new ArrayList<>();
         for(int i=0,count=cursor.getCount();i<count;i++) {
             cursor.moveToNext();
             Word word = new Word();
             word.setId(cursor.getInt(0));
             word.setWord(cursor.getString(1));
-            word.setWord(cursor.getString(2));
+            word.setMean(cursor.getString(2));
             words.add(word);
         }
         return words;
@@ -238,6 +229,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
                     downloadFinish=true;
                 Log.e(TAG, "canDownload:"+canDownload+", downloadFinish:"+downloadFinish+", downloading:"+downloading);
                 while (canDownload && !downloadFinish){
+                    Log.e(TAG, "downloading:"+downloading);
                     if(!downloading){
                         //查库调下载接口
                         ArrayList<Word> words = getNotDownloadWords(20);
@@ -246,21 +238,29 @@ public class ServiceCrack extends Service implements ServiceInterFace{
                             downloadFinish=true;
                             break;
                         }
-                        Log.e(TAG, "words:"+words);
                         ArrayList<String> wordsStr = new ArrayList<String>();
+                        boolean isoffline=true;
                         for(int i=0;i<words.size();i++){
+                            isoffline=true;
                             Word word = words.get(i);
+                            //Log.e(TAG, "word:"+word.getWord()+", "+word.get);
                             String mean = word.getMean();
                             String wordStr = word.getWord();
-                            if(mean.length()==0) {
+                            if(mean==null || mean.length()==0) {
                                 wordsStr.add(wordStr);
+                                isoffline=false;
                             }
                             //检查发音文件是否存在
-                            String filename=word+"_uk.mp3";
+                            String filename=wordStr+"_uk.mp3";
                             File phoneFile = new File(Constant.phonePrefixPath,filename);
                             if(!phoneFile.exists()){
+                                isoffline=false;
                                 downloadPhone(userid,word,"uk",phoneFile);
+                            }else {
+                                Log.e(TAG,"phone exists:"+phoneFile);
                             }
+                            if(isoffline)
+                                repaireOfflineStatus(userid,bookid,word.getId());
                         }
                         if(wordsStr.size()>0)
                             downloadWords(userid,token,bookid, StringUtil.join(wordsStr,","));
@@ -272,23 +272,24 @@ public class ServiceCrack extends Service implements ServiceInterFace{
                         }
                     }
                 }
-
             }
         }).start();
 
     }
 
+    private void repaireOfflineStatus(int userid,int bookid,int wid){
+        SQLiteDatabase db = globalInfo.getDb(getBaseContext());
+        String sql = "update t_words set offline=2 where userid=? and bookid=? and id=?";
+        db.execSQL(sql, new String[]{"" + userid, "" + bookid, "" + wid});
+        offlineWords++;
+        Log.e(TAG, "repaire word: userid:"+userid+", bookid:"+bookid+",wid:"+wid);
+    };
+
     private void incrOffline(int userid,int bookid,int wid){
         SQLiteDatabase db = globalInfo.getDb(getApplicationContext());
         String sql = "update t_words set offline=offline+1 where userid=? and bookid=? and id=?";
-        db.rawQuery(sql, new String[]{"" + userid, "" + bookid,""+wid});
-        /*
-        sql = "select offline from t_words where userid=? and bookid=? and id=?";
-        Cursor cursor=db.rawQuery(sql, new String[]{"" + userid, "" + bookid,""+wid});
-        cursor.moveToNext();
-        int offline=cursor.getInt(0);
-        if()
-        */
+        db.execSQL(sql, new String[]{"" + userid, "" + bookid, "" + wid});
+
         checkOffline(userid,bookid,wid);
     }
     private void checkOffline(int userid,int bookid,int wid){
@@ -302,23 +303,28 @@ public class ServiceCrack extends Service implements ServiceInterFace{
     }
 
     private void downloadPhone(final int userid,final Word word, String type, File phoneFile){
+        Log.e(TAG, "downloadPhone word:"+word.getWord());
         String url = "http://120.24.75.92:5006/word/downloadphone?word="+word.getWord()+"&type="+type;
         final String path = phoneFile.getPath();
-        NetworkFileHelper.getInstance().startGetFile(url, path, new NetworkFileHelper.GetFileRequest() {
+        networkFileHelper.startGetFile(url, path, new NetworkFileHelper.GetFileRequest() {
             @Override
-            public void onStart() {}
+            public void onStart() {
+            }
 
             @Override
             public void onResponse(String error) {
-                File file = new File(path);
-                if (file.exists()) {
-                    Log.e(TAG, "exists:" + path);
-                } else {
-                    Log.e(TAG, "not exists:" + path);
+                if(error!=null && error.length()>0){
+                    Log.e(TAG, "downloadPhone error:"+error);
+                }else {
+                    File file = new File(path);
+                    if (file.exists()) {
+                        //更新数据库
+                        incrOffline(userid, word.getBookid(), word.getId());
+                        Log.e(TAG, "download phone:" + word.getWord());
+                    } else {
+                        Log.e(TAG, "not exists:" + path);
+                    }
                 }
-                //更新数据库
-                incrOffline(userid,word.getBookid(),word.getId());
-                Log.e(TAG, "download phone:"+word.getWord());
             }
 
             @Override

@@ -6,7 +6,11 @@ import android.content.pm.PackageManager;
 import android.util.Log;
 
 
+import com.facebook.stetho.Stetho;
+import com.facebook.stetho.okhttp3.StethoInterceptor;
+
 import cn.lessask.word.net.VolleyHelper;
+import okhttp3.OkHttpClient;
 
 /**
  * Created by huangji on 2015/8/12.
@@ -26,6 +30,11 @@ public class MyApplication extends Application{
             Log.e(TAG, "getChannel Error:" + e);
         }
         Constant.setContext(getApplicationContext());
+
+        Stetho.initializeWithDefaults(this);
+        new OkHttpClient.Builder()
+                .addNetworkInterceptor(new StethoInterceptor())
+                .build();
     }
 
     public String getChannel(){

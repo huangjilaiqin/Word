@@ -50,7 +50,10 @@ public class NetworkFileHelper {
                         getFileRequest.onStart();
                         break;
                     case REQUEST_DONE:
-                        getFileRequest.onResponse((String)msg.obj);
+                        String ab = (String)msg.obj;
+                        Log.e(TAG, "tag:"+tag+", "+ab);
+                        Log.e(TAG, "tag:"+tag+", "+getFileRequest);
+                        getFileRequest.onResponse(ab);
                         getFileRequests.remove(tag);
                         break;
                     case REQUEST_ERROR:
@@ -147,6 +150,7 @@ public class NetworkFileHelper {
     public void startGetFile(final String url, final String path, GetFileRequest getFileRequest){
         //加入文件请求队列
         final int tag = getFileRequests.size();
+        Log.e(TAG, "tag before:"+tag+", "+getFileRequest);
         getFileRequests.put(tag, getFileRequest);
         new Thread(new Runnable() {
             Message msg = new Message();
@@ -158,7 +162,6 @@ public class NetworkFileHelper {
                 handler.sendMessage(msg);
 
                 String error = HttpHelper.httpDownload(url, path);
-                Log.e(TAG, "startGetFile result:"+error);
                 if(error==null) {
                     Message msg = new Message();
                     msg.arg1 = GET_FILE;
@@ -166,6 +169,7 @@ public class NetworkFileHelper {
                     msg.obj = error;
                     msg.what = REQUEST_DONE;
                     handler.sendMessage(msg);
+                    Log.e(TAG, "startGetFile ok:"+path);
                 }else {
                     Message msg = new Message();
                     msg.arg1 = GET_FILE;
@@ -173,6 +177,7 @@ public class NetworkFileHelper {
                     msg.obj = error;
                     msg.what = REQUEST_ERROR;
                     handler.sendMessage(msg);
+                    Log.e(TAG, "startGetFile error:"+error+", "+path);
                 }
             }
         }).start();
