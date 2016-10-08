@@ -38,15 +38,6 @@ public class MainActivity extends AppCompatActivity {
     private final int LOGIN=1;
     private CircleImageView headImg;
 
-    /*
-    public static final String APPID = "2016091600523406";
-    public static final String RSA_PRIVATE="MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAKal294im/0bJw233rXihAcWmTPkjGZoN1HY9pWK2CXfJtN4w1gVNo5QtH3klVKhAXTNa6RGsJFzi7om7Z1/W/L6H8B4RuYDhLSnCa+v6zF04QZDseLsIV2KtaVYi3LMkp9uJLYzT2sV1sv3W40vz+rY1hF+7f5ZdBNx9H+Y7LCbAgMBAAECgYEAlQ8uBxd154Nt/ztEHfSqm5x/FIeNfdwh/zfN+BzlEZr0o5sVP6hZ0BooF6NqXSpenxdO/PWt4aw0gyFm0MWme9EiJgsytV+gFcxiK2OQWFmmUNy8OzM4dO3IBGC3OD4hPQ0byczVb6eySJtzYI6b+9drv1CJ7IjUkMqSpVlUNGECQQDc2uL3UHmllhsflUg/TD5q42Qz6tVa4lsX1Od7d8IlWkDoWkiotm6oqIX2dBiuOnsOxMynsEwctJiw7EfciLVdAkEAwSqzfHzFRWZkXuAq+V1xbpRx0WSZ5MyXM0Dyyi2FjXuS6u3pO5LetS1dH8nUHqhYI8CR+uxyIjDuESUTb8RmVwJAHikuUcQFuN1U+u0yHqLU61f+eTCaznyXIBwNOMlUFDHNJ24c+h1f41yQXuXf8Ps/jvbFVCk5W7o2GANMlQt+aQJAPbUucW5Kdskm90gVcmPvgKvbUFEa+ISDKNRuuzefmnsHjBVElMtuaeJ8BVOsd76/qWwzNj2imFmZM9DsTKApMQJARGy/CS040b9nowIFLz7gU/ArcJ20a1yBdRuI/u2XTCHcLAMO6MZgLIakOTHHjtEG4lylxIuFqCjJnqNlqUTumw==";
-    */
-
-    public static final String APPID = "2016091701915046";
-    public static final String RSA_PRIVATE="MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAK18h0X4GvsC1vTD26CTS/O+/HvjfQ74EDo74gS2ALGm/UD4adjqVHuvXLwtJzm3/ghKmybbO5h7PPLfKoF+fi5SmzDMpqDiv+7t+KartgmqEbtG7f6UuTgMPw1t8wtotv+l6TyOZ8PQlv8gUxbRtrKrRGaussGdk8CSNdk2ajQzAgMBAAECgYA2ig6QzZXV0ae4HRafnY7kGuePHw5CtXOMiyTb7Ee9kczOLwo/mjNjCtcxhVRujcw72RB7n7JVlnCrvcLEIPsTmk3FBzP3QbGeX3CSCWhVcwWdXckc8RdW2ECzWv8gIbgvyvyJi39VxqMToYmGSYgD2eYZqoqPvCduktM5KC9e4QJBAN4wXpfdWCvPCuSCvwiHnm+gJxBW2yRamkLCrUi+dtbh9sXgHsNGWqdFLYY1Y0VNPWzGaj1ZJDbTLPQcMW5IwVECQQDH4uVURbGQbIKPJVhfhUL3NYwR1IXurrYL5Iepavbxeo8kPy9czp37ZbIu27ZeTDEEd1s6XW0Oynuog+R/3txDAkAt0BlhBNGuTsV3MoJDNvtzFrmXQ+FxkIDoLQ3fxu3oBrWEPV76cqI0hS4K0y1B19hHem3jcmLmLwrA1qNWkwfRAkEAk5dm7BXV6aUlthrGKSnV64FfXp8FEdtxUlC5FxCDLITpgsMg7q8lmcZajhzviKtLmlejRfJMH5rFOgXBR+W/zwJAAzX1ZbiMUqxCe2ixgb3mvx/Sobjp9UrS9oGp8fzumkes23nueHtFOqZW1/fLaqoQijw3oCfIp+cvf7+wBu2c/Q==";
-
-
     private GlobalInfo globalInfo=GlobalInfo.getInstance();
 
     private ServiceConnection connection = new ServiceConnection() {
@@ -68,38 +59,6 @@ public class MainActivity extends AppCompatActivity {
         unbindService(connection);
     }
 
-    private void callAliPay(){
-        Map<String, String> params = OrderInfoUtil2_0.buildOrderParamMap(APPID);
-        String orderParam = OrderInfoUtil2_0.buildOrderParam(params);
-        Log.e(TAG, "orderParam "+orderParam);
-        String sign = OrderInfoUtil2_0.getSign(params, RSA_PRIVATE);
-        Log.e(TAG, "sign "+sign);
-        final String orderInfo = orderParam + "&" + sign;
-
-        Log.e(TAG, "orderInfo: "+orderInfo);
-
-        Runnable payRunnable = new Runnable() {
-            @Override
-            public void run() {
-                PayTask alipay = new PayTask(MainActivity.this);
-                String v = alipay.getVersion();
-                Log.e(TAG, "version:"+v);
-                Map<String,String> result = alipay.payV2(orderInfo,true);
-                //alipay.h5Pay(orderInfo,true);
-
-
-                Log.e(TAG, "pay cb");
-                //Message msg = new Message();
-                //msg.what = SDK_PAY_FLAG;
-                //msg.obj = result;
-                //mHandler.sendMessage(msg);
-            }
-        };
-        // 必须异步调用
-        Thread payThread = new Thread(payRunnable);
-        payThread.start();
-    }
-
     private void callAliPay2(){
 
         GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://www.word.gandafu.com/buy.php", ResponseData.class, new GsonRequest.PostGsonRequest<ResponseData>() {
@@ -112,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
                         Intent intent = new Intent(MainActivity.this, LoginActivity.class);
                         startActivityForResult(intent, LOGIN);
                     }else {
-                        Toast.makeText(MainActivity.this, "changeList error:" + user.getError(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, user.getError(), Toast.LENGTH_SHORT).show();
                     }
                 }else {
                     Log.e(TAG, "callAliPay2:"+user.getData());
@@ -128,10 +87,7 @@ public class MainActivity extends AppCompatActivity {
                             //alipay.h5Pay(orderInfo,true);
 
                             Log.e(TAG, "pay cb");
-                            //Message msg = new Message();
-                            //msg.what = SDK_PAY_FLAG;
-                            //msg.obj = result;
-                            //mHandler.sendMessage(msg);
+
                         }
                     };
                     // 必须异步调用
@@ -147,7 +103,8 @@ public class MainActivity extends AppCompatActivity {
             }
             @Override
             public void setPostData(Map datas) {
-                datas.put("goodType","1");
+                datas.put("userid",""+globalInfo.getUser().getUserid());
+                datas.put("goodid","0");
             }
         });
         VolleyHelper.getInstance().addToRequestQueue(gsonRequest);
