@@ -127,7 +127,6 @@ public class MainActivity extends AppCompatActivity {
                             Map<String,String> result = alipay.payV2(orderInfo,true);
                             //alipay.h5Pay(orderInfo,true);
 
-
                             Log.e(TAG, "pay cb");
                             //Message msg = new Message();
                             //msg.what = SDK_PAY_FLAG;
@@ -148,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
             }
             @Override
             public void setPostData(Map datas) {
-
+                datas.put("goodType","1");
             }
         });
         VolleyHelper.getInstance().addToRequestQueue(gsonRequest);
