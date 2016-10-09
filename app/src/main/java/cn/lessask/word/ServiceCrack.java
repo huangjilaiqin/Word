@@ -148,6 +148,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
         if(totalWords==0){
             return calOfflineRate(userid,bookid);
         }
+        Log.e(TAG, "getOfflineRate:"+offlineWords+"/"+totalWords);
         return offlineWords/(totalWords*1.0f);
     }
     private void downloadWords(final int userid,final String token,final int bookid,final String wordsStr){
@@ -175,7 +176,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
 
                         checkOffline(userid, bookid, word.getId());
                     }
-                    offlineWords+=words.size();
+                    //offlineWords+=words.size();
                     Log.e(TAG, "service download finish");
                 }
                 downloading=false;
@@ -282,7 +283,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
         String sql = "update t_words set offline=2 where userid=? and bookid=? and id=?";
         db.execSQL(sql, new String[]{"" + userid, "" + bookid, "" + wid});
         offlineWords++;
-        Log.e(TAG, "repaire word: userid:"+userid+", bookid:"+bookid+",wid:"+wid);
+        Log.e(TAG, "offline word repaire wid:"+wid);
     };
 
     private void incrOffline(int userid,int bookid,int wid){
@@ -297,8 +298,11 @@ public class ServiceCrack extends Service implements ServiceInterFace{
         String sql = "select id from t_words where userid=? and bookid=? and id=? and offline=2";
         Cursor cursor=db.rawQuery(sql, new String[]{"" + userid, "" + bookid,""+wid});
         if(cursor.getCount()==1){
-            offlineWords++;
-            Log.e(TAG, "offline word:"+wid);
+            synchronized (getBaseContext()) {
+                offlineWords++;
+                Log.e(TAG, "getOfflineRate:"+offlineWords);
+                Log.e(TAG, "offline word:"+wid);
+            }
         }
     }
 

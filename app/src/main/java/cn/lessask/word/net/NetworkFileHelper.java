@@ -8,6 +8,8 @@ import com.google.gson.Gson;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by JHuang on 2015/12/9.
@@ -18,8 +20,10 @@ public class NetworkFileHelper {
     private final int REQUEST_DONE=2;
     private final int REQUEST_ERROR=3;
     private Gson gson = new Gson();
-    private Map<Integer, PostFileRequest> postFileRequests = new HashMap<>();
-    private Map<Integer, GetFileRequest> getFileRequests = new HashMap<>();
+    private Map<String, PostFileRequest> postFileRequests = new ConcurrentHashMap<>();
+    private Map<String, GetFileRequest> getFileRequests = new ConcurrentHashMap<>();
+    //private Map<Long, PostFileRequest> postFileRequests = new HashMap<>();
+    //private Map<Long, GetFileRequest> getFileRequests = new HashMap<>();
     private int POST_FILE = 0;
     private int GET_FILE = 1;
 
@@ -27,37 +31,38 @@ public class NetworkFileHelper {
         @Override
         public void handleMessage(Message msg) {
             if(msg.arg1==POST_FILE) {
-                int tag = msg.arg2;
+                FileResponse fileResponse = (FileResponse)msg.obj;
+                String tag = fileResponse.getTag();
+                String error = fileResponse.getError();
                 PostFileRequest postFileRequest = postFileRequests.get(tag);
                 switch (msg.what) {
                     case REQUEST_START:
                         postFileRequest.onStart();
                         break;
                     case REQUEST_DONE:
-                        postFileRequest.onResponse(msg.obj);
+                        postFileRequest.onResponse(error);
                         postFileRequests.remove(tag);
                         break;
                     case REQUEST_ERROR:
-                        postFileRequest.onError((String) msg.obj);
+                        postFileRequest.onError(error);
                         postFileRequests.remove(tag);
                         break;
                 }
             }else if(msg.arg1==GET_FILE){
-                int tag = msg.arg2;
+                FileResponse fileResponse = (FileResponse)msg.obj;
+                String tag = fileResponse.getTag();
+                String error = fileResponse.getError();
                 GetFileRequest getFileRequest = getFileRequests.get(tag);
                 switch (msg.what) {
                     case REQUEST_START:
                         getFileRequest.onStart();
                         break;
                     case REQUEST_DONE:
-                        String ab = (String)msg.obj;
-                        Log.e(TAG, "tag:"+tag+", "+ab);
-                        Log.e(TAG, "tag:"+tag+", "+getFileRequest);
-                        getFileRequest.onResponse(ab);
+                        getFileRequest.onResponse(error);
                         getFileRequests.remove(tag);
                         break;
                     case REQUEST_ERROR:
-                        getFileRequest.onError((String) msg.obj);
+                        getFileRequest.onError(error);
                         getFileRequests.remove(tag);
                         break;
                 }
@@ -94,92 +99,78 @@ public class NetworkFileHelper {
         void onError(String error);
     }
 
-    public void startPost(String url, final Class responseClass, final PostFileRequest postFile){
-        final int tag = postFileRequests.size();
-        postFileRequests.put(tag, postFile);
-        PostSingleEvent event = new PostSingleEvent() {
-            @Override
-            public void onStart() {
-                Message msg = new Message();
-                msg.what = REQUEST_START;
-                msg.arg1 = POST_FILE;
-                msg.arg2 = tag;
-                handler.sendMessage(msg);
-            }
-
-            @Override
-            public void onDone(PostResponse postResponse) {
-                Message msg = new Message();
-                msg.what = REQUEST_DONE;
-                msg.arg1 = POST_FILE;
-                msg.arg2 = tag;
-                String body = postResponse.getBody();
-                msg.obj  = gson.fromJson(body, responseClass);
-                handler.sendMessage(msg);
-            }
-
-            @Override
-            public void onError(String err) {
-                Message msg = new Message();
-                msg.what = REQUEST_ERROR;
-                msg.arg1 = POST_FILE;
-                msg.arg2 = tag;
-                msg.obj = err;
-                handler.sendMessage(msg);
-            }
-
-            @Override
-            public Map<String, String> getFiles() {
-                return postFile.getFiles();
-            }
-
-            @Override
-            public Map<String, String> getHeaders() {
-                return postFile.getHeaders();
-            }
-
-            @Override
-            public Map<String, String> getImages() {
-                return postFile.getImages();
-            }
-        };
-        PostSingle postSingle = new PostSingle(url, event);
-        postSingle.start();
+    private int randomInt(){
+        return (int)(Math.random()*1000);
     }
 
     public void startGetFile(final String url, final String path, GetFileRequest getFileRequest){
         //加入文件请求队列
-        final int tag = getFileRequests.size();
-        Log.e(TAG, "tag before:"+tag+", "+getFileRequest);
+        int rand = randomInt();
+        final String tag = ""+System.currentTimeMillis()+rand;
+        Log.e(TAG, "tag before:" + tag + ", " + rand);
+        if(getFileRequests.get(tag)!=null)
+            Log.e(TAG, "same tag:"+tag);
         getFileRequests.put(tag, getFileRequest);
+
+        final FileResponse fileResponse=new FileResponse();
+        fileResponse.setTag(tag);
         new Thread(new Runnable() {
             Message msg = new Message();
             @Override
             public void run() {
                 msg.arg1 = GET_FILE;
-                msg.arg2 = tag;
+                msg.obj= fileResponse;
                 msg.what = REQUEST_START;
                 handler.sendMessage(msg);
 
                 String error = HttpHelper.httpDownload(url, path);
+                fileResponse.setError(error);
+
                 if(error==null) {
                     Message msg = new Message();
                     msg.arg1 = GET_FILE;
-                    msg.arg2 = tag;
-                    msg.obj = error;
+                    msg.obj= fileResponse;
                     msg.what = REQUEST_DONE;
                     handler.sendMessage(msg);
                     Log.e(TAG, "startGetFile ok:"+path);
                 }else {
                     Message msg = new Message();
                     msg.arg1 = GET_FILE;
-                    msg.arg2 = tag;
-                    msg.obj = error;
+                    msg.obj= fileResponse;
                     msg.what = REQUEST_ERROR;
                     handler.sendMessage(msg);
                     Log.e(TAG, "startGetFile error:"+error+", "+path);
                 }
             }
         }).start();
+    }
+
+    class FileResponse{
+        private String tag;
+        private String error;
+
+        public FileResponse() {
+        }
+
+        public FileResponse(String tag, String error) {
+            this.tag = tag;
+            this.error = error;
+        }
+
+        public String getTag() {
+            return tag;
+        }
+
+        public void setTag(String tag) {
+            this.tag = tag;
+        }
+
+        public String getError() {
+            return error;
+        }
+
+        public void setError(String error) {
+            this.error = error;
+        }
     }
 }

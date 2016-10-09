@@ -167,9 +167,9 @@ public class MainActivity extends AppCompatActivity {
         headImg.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //Intent intent = new Intent(MainActivity.this, PersionalActivity.class);
-                //startActivity(intent);
-                callAliPay2();
+                Intent intent = new Intent(MainActivity.this, PersionalActivity.class);
+                startActivity(intent);
+                //callAliPay2();
             }
         });
 
