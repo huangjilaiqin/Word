@@ -16,14 +16,20 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader;
 
 import java.math.BigDecimal;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import cn.lessask.word.model.Book;
 import cn.lessask.word.model.User;
+import cn.lessask.word.net.GsonRequest;
 import cn.lessask.word.net.VolleyHelper;
 import cn.lessask.word.util.GlobalInfo;
 
@@ -39,6 +45,8 @@ public class PersionalActivity extends AppCompatActivity {
 
     private final int DOWNLOAD_UPDATE=1;
     private final int DOWNLOAD_STOP_UPDATE=2;
+    private final int NOT_SELECT_BOOK=3;
+    private final int GET_BOOK_NAME =4;
 
     private final int CHANGE_BOOK=1;
 
@@ -56,11 +64,14 @@ public class PersionalActivity extends AppCompatActivity {
                     if(rateStr.equals("100.00")){
                         offlineRate.setVisibility(View.INVISIBLE);
                         download.setEnabled(false);
+                        download.setVisibility(View.VISIBLE);
                         download.setText("已离线");
+                        timer.cancel();
                     }else{
                         offlineRate.setVisibility(View.VISIBLE);
                         offlineRate.setText(rateStr + "%");
                         download.setEnabled(true);
+                        download.setVisibility(View.VISIBLE);
                         download.setText("暂停离线");
                     }
                     break;
@@ -71,13 +82,23 @@ public class PersionalActivity extends AppCompatActivity {
                     if(rateStr.equals("100.00")){
                         offlineRate.setVisibility(View.INVISIBLE);
                         download.setEnabled(false);
+                        download.setVisibility(View.VISIBLE);
                         download.setText("已离线");
                     }else{
                         offlineRate.setVisibility(View.VISIBLE);
                         offlineRate.setText(rateStr + "%");
                         download.setEnabled(true);
+                        download.setVisibility(View.VISIBLE);
                         download.setText("离线");
                     }
+                    break;
+                case NOT_SELECT_BOOK:
+                    offlineRate.setVisibility(View.INVISIBLE);
+                    download.setVisibility(View.INVISIBLE);
+                    break;
+                case GET_BOOK_NAME:
+                    String bookName=(String)msg.obj;
+                    bookNameTv.setText(bookName);
                     break;
             }
         }
@@ -130,16 +151,61 @@ public class PersionalActivity extends AppCompatActivity {
 
         String bookName = sp.getString("bookName","");
         if(bookName.length()==0){
-            //根据bookid请求单词书信息
+            int bookid = user.getBookid();
+            if(bookid==0){
+                //还未选择词库
+                offlineRate.setVisibility(View.INVISIBLE);
+                download.setEnabled(false);
+                download.setText("离线");
+            }else{
+                //根据bookid请求单词书信息
+                queryBookInfo(user.getUserid(),user.getToken(),bookid);
+            }
         }else{
             bookNameTv.setText(bookName);
         }
 
         bindService();
+
+    }
+
+    private void queryBookInfo(final int userid,final String token,final int bookid){
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/bookinfo", Book.class, new GsonRequest.PostGsonRequest<Book>() {
+            @Override
+            public void onStart() {}
+            @Override
+            public void onResponse(Book book) {
+                if(book.getError()!=null && book.getError()!="" || book.getErrno()!=0){
+                    Toast.makeText(PersionalActivity.this, "bookinfo error:" + book.getError(), Toast.LENGTH_SHORT).show();
+                }else {
+                    SharedPreferences sp = PersionalActivity.this.getSharedPreferences("SP", MODE_PRIVATE);
+                    //存入数据
+                    SharedPreferences.Editor editor = sp.edit();
+                    editor.putString("bookName",book.getName());
+                    editor.commit();
+                    Message message = new Message();
+                    message.what = GET_BOOK_NAME;
+                    message.obj=book.getName();
+                    handler.sendMessage(message);
+                }
+            }
+
+            @Override
+            public void onError(VolleyError error) {
+                Toast.makeText(PersionalActivity.this,  error.toString(), Toast.LENGTH_SHORT).show();
+            }
+            @Override
+            public void setPostData(Map datas) {
+                datas.put("userid", "" + userid);
+                datas.put("token", token);
+                datas.put("bookid",""+bookid);
+            }
+        });
+        VolleyHelper.getInstance().addToRequestQueue(gsonRequest);
     }
 
     private void monitorDownload(){
-        TimerTask timerTask = new TimerTask() {
+        final TimerTask timerTask = new TimerTask() {
             @Override
             public void run() {
                 float rate = serviceInterFace.getOfflineRate(user.getUserid(), user.getBookid());
@@ -179,12 +245,19 @@ public class PersionalActivity extends AppCompatActivity {
             Log.e(TAG, "isDownloading");
             monitorDownload();
         }else {
-            float rate = serviceInterFace.getOfflineRate(user.getUserid(), user.getBookid());
-            Log.e(TAG, "service offlinerate:" + rate);
-            Message message = new Message();
-            message.what = DOWNLOAD_STOP_UPDATE;
-            message.obj = rate * 100;
-            handler.sendMessage(message);
+            int bookid=user.getBookid();
+            if(bookid>0) {
+                float rate = serviceInterFace.getOfflineRate(user.getUserid(), user.getBookid());
+                Log.e(TAG, "service offlinerate:" + rate);
+                Message message = new Message();
+                message.what = DOWNLOAD_STOP_UPDATE;
+                message.obj = rate * 100;
+                handler.sendMessage(message);
+            }else {
+                Message message = new Message();
+                message.what = NOT_SELECT_BOOK;
+                handler.sendMessage(message);
+            }
         }
     }
     @Override

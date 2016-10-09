@@ -6,7 +6,7 @@ import android.os.Parcelable;
 /**
  * Created by laiqin on 16/9/19.
  */
-public class Book  implements Parcelable {
+public class Book extends Response {
     private int bookid;
     private String name;
     private int num;        //单词个数

@@ -61,7 +61,7 @@
                 android:layout_centerVertical="true"
                 android:layout_marginLeft="16dp"
                 android:textSize="18dp"
-                android:text="四级"
+                android:text="选择词库"
                 />
             <ImageView
                 android:id="@+id/book_arrow"
@@ -81,7 +81,7 @@
                 android:layout_centerVertical="true"
                 android:background="@drawable/btn_bg"
                 android:textSize="12dp"
-                android:text="已离线"
+                android:text="离线"
                 />
             <TextView
                 android:id="@+id/offline_rate"
@@ -90,7 +90,7 @@
                 android:layout_marginRight="8dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="24.32%"
+                android:text=""
                 />
         </RelativeLayout>
         <View

@@ -145,11 +145,16 @@ public class ServiceCrack extends Service implements ServiceInterFace{
 
     @Override
     public float getOfflineRate(int userid, int bookid) {
+        /*
         if(totalWords==0){
             return calOfflineRate(userid,bookid);
         }
-        Log.e(TAG, "getOfflineRate:"+offlineWords+"/"+totalWords);
-        return offlineWords/(totalWords*1.0f);
+        synchronized (getBaseContext()) {
+            Log.e(TAG, "getOfflineRate:" + offlineWords + "/" + totalWords);
+            return offlineWords / (totalWords * 1.0f);
+        }
+        */
+        return calOfflineRate(userid,bookid);
     }
     private void downloadWords(final int userid,final String token,final int bookid,final String wordsStr){
         Type type = new TypeToken<ArrayListResponse<Word>>() {}.getType();
@@ -267,7 +272,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
                             downloadWords(userid,token,bookid, StringUtil.join(wordsStr,","));
                         //休息
                         try {
-                            Thread.sleep(1000);
+                            Thread.sleep(500);
                         }catch (Exception e){
 
                         }

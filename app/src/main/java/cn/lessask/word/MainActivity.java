@@ -385,7 +385,7 @@ public class MainActivity extends AppCompatActivity {
             switch (requestCode) {
                 case LOGIN:
                     User user = data.getParcelableExtra("user");
-                    Log.e(TAG, "onActivityResult userid:" + user.getUserid() + ", nickname:" + user.getNickname());
+                    Log.e(TAG, "onActivityResult userid:" + user.getUserid() + ", nickname:" + user.getNickname()+", headimg:"+user.getHeadimg());
 
                     storageUser(user);
                     //storageUser2Db(user);
