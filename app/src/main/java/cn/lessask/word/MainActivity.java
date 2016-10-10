@@ -40,6 +40,9 @@ public class MainActivity extends AppCompatActivity {
 
     private GlobalInfo globalInfo=GlobalInfo.getInstance();
 
+    private ServiceInterFace serviceInterFace;
+    private Intent serviceIntent;
+
     private ServiceConnection connection = new ServiceConnection() {
 
         @Override
@@ -48,8 +51,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            //myBinder = (MyService.MyBinder) service;
-            //myBinder.startDownload();
+            serviceInterFace=(ServiceInterFace)service;
         }
     };
 
@@ -146,8 +148,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Intent bindIntent = new Intent(this, ServiceCrack.class);
-        bindService(bindIntent, connection, BIND_AUTO_CREATE);
+        Intent serviceIntent = new Intent(this, ServiceCrack.class);
+        bindService(serviceIntent, connection, BIND_AUTO_CREATE);
 
         setContentView(R.layout.activity_main);
         findViewById(R.id.go).setOnClickListener(new View.OnClickListener() {
@@ -223,14 +225,6 @@ public class MainActivity extends AppCompatActivity {
                 User user = new User(userid,"",nickname,token,headimg,gender,bookid);
                 globalInfo.setUser(user);
                 loadHeadImg(user.getHeadimg());
-
-                if(bookid>0){
-                    //检查t_words是否下载了相应的词库
-                    String[] where = new String[]{""+user.getUserid(),""+bookid};
-                    Cursor cursor = globalInfo.getDb(MainActivity.this).rawQuery("select count(id) as num from t_words where userid=? and bookid=?",where);
-                    if(cursor.getCount()==0)
-                        changeList(user.getUserid(),user.getToken(),0,bookid);
-                }
             }
         }
     }
@@ -405,4 +399,5 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
 }

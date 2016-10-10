@@ -304,6 +304,7 @@ public class PersionalActivity extends AppCompatActivity {
                         } else {
                             bindService();
                         }
+                        serviceInterFace.downloadWordStatus(user.getUserid(), user.getToken(), user.getBookid());
                     }
                     break;
             }

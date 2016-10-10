@@ -22,12 +22,18 @@ import com.google.gson.reflect.TypeToken;
 import java.io.File;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import cn.lessask.word.model.ArrayListResponse;
+import cn.lessask.word.model.Book;
 import cn.lessask.word.model.Word;
+import cn.lessask.word.model.WordList;
+import cn.lessask.word.model.WordStatus;
 import cn.lessask.word.net.GsonRequest;
 import cn.lessask.word.net.NetworkFileHelper;
 import cn.lessask.word.net.VolleyHelper;
@@ -145,7 +151,6 @@ public class ServiceCrack extends Service implements ServiceInterFace{
 
     @Override
     public float getOfflineRate(int userid, int bookid) {
-        /*
         if(totalWords==0){
             return calOfflineRate(userid,bookid);
         }
@@ -153,14 +158,14 @@ public class ServiceCrack extends Service implements ServiceInterFace{
             Log.e(TAG, "getOfflineRate:" + offlineWords + "/" + totalWords);
             return offlineWords / (totalWords * 1.0f);
         }
-        */
-        return calOfflineRate(userid,bookid);
+        //return calOfflineRate(userid,bookid);
     }
     private void downloadWords(final int userid,final String token,final int bookid,final String wordsStr){
         Type type = new TypeToken<ArrayListResponse<Word>>() {}.getType();
         GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/downloadwords", type, new GsonRequest.PostGsonRequest<ArrayListResponse>() {
             @Override
             public void onStart() {
+                changeDownloadStatus(1);
                 Log.e(TAG, "service stat download words");
             }
             @Override
@@ -181,15 +186,14 @@ public class ServiceCrack extends Service implements ServiceInterFace{
 
                         checkOffline(userid, bookid, word.getId());
                     }
-                    //offlineWords+=words.size();
                     Log.e(TAG, "service download finish");
                 }
-                downloading=false;
+                changeDownloadStatus(-1);
             }
 
             @Override
             public void onError(VolleyError error) {
-                downloading=false;
+                changeDownloadStatus(-1);
                 Log.e(TAG, "service downloadWords error:"+error.getMessage());
             }
             @Override
@@ -204,7 +208,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
     }
 
     private boolean canDownload=false;
-    private boolean downloading=false;
+    private int downloading=0;
     private boolean downloadFinish=false;
 
     private ArrayList<Word> getNotDownloadWords(int wordSize){
@@ -224,19 +228,22 @@ public class ServiceCrack extends Service implements ServiceInterFace{
 
     @Override
     public void startDownload(final int userid,final String token,final int bookid) {
+        this.userid=userid;
+        this.bookid=bookid;
+
         Log.e(TAG, "startDownload bookid:"+bookid);
         new Thread(new Runnable() {
             @Override
             public void run() {
                 canDownload=true;
-                downloading=false;
+                downloading=0;
                 float rate = getOfflineRate(userid,bookid);
                 if(rate==1)
                     downloadFinish=true;
                 Log.e(TAG, "canDownload:"+canDownload+", downloadFinish:"+downloadFinish+", downloading:"+downloading);
                 while (canDownload && !downloadFinish){
                     Log.e(TAG, "downloading:"+downloading);
-                    if(!downloading){
+                    if(downloading==0){
                         //查库调下载接口
                         ArrayList<Word> words = getNotDownloadWords(20);
                         if(words.size()==0){
@@ -270,25 +277,30 @@ public class ServiceCrack extends Service implements ServiceInterFace{
                         }
                         if(wordsStr.size()>0)
                             downloadWords(userid,token,bookid, StringUtil.join(wordsStr,","));
-                        //休息
-                        try {
-                            Thread.sleep(500);
-                        }catch (Exception e){
+                    }
+                    //休息
+                    try {
+                        Thread.sleep(1000);
+                    }catch (Exception e){
 
-                        }
                     }
                 }
             }
         }).start();
-
     }
 
     private void repaireOfflineStatus(int userid,int bookid,int wid){
         SQLiteDatabase db = globalInfo.getDb(getBaseContext());
         String sql = "update t_words set offline=2 where userid=? and bookid=? and id=?";
         db.execSQL(sql, new String[]{"" + userid, "" + bookid, "" + wid});
-        offlineWords++;
-        Log.e(TAG, "offline word repaire wid:"+wid);
+
+        synchronized (getBaseContext()) {
+            offlineWords++;
+            Log.e(TAG, "offline word repaire wid:" + wid);
+            if(mySet.contains(wid))
+                Log.e(TAG, "repeat 2 wid:"+wid);
+            mySet.add(wid);
+        }
     };
 
     private void incrOffline(int userid,int bookid,int wid){
@@ -298,6 +310,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
 
         checkOffline(userid,bookid,wid);
     }
+    private Set<Integer> mySet=new HashSet<>();
     private void checkOffline(int userid,int bookid,int wid){
         SQLiteDatabase db = globalInfo.getDb(getApplicationContext());
         String sql = "select id from t_words where userid=? and bookid=? and id=? and offline=2";
@@ -307,7 +320,16 @@ public class ServiceCrack extends Service implements ServiceInterFace{
                 offlineWords++;
                 Log.e(TAG, "getOfflineRate:"+offlineWords);
                 Log.e(TAG, "offline word:"+wid);
+                if(mySet.contains(wid))
+                    Log.e(TAG, "repeat 1 wid:"+wid);
+                mySet.add(wid);
             }
+        }
+    }
+
+    private void changeDownloadStatus(int step){
+        synchronized (getBaseContext()){
+            downloading+=step;
         }
     }
 
@@ -318,6 +340,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
         networkFileHelper.startGetFile(url, path, new NetworkFileHelper.GetFileRequest() {
             @Override
             public void onStart() {
+                changeDownloadStatus(1);
             }
 
             @Override
@@ -334,11 +357,13 @@ public class ServiceCrack extends Service implements ServiceInterFace{
                         Log.e(TAG, "not exists:" + path);
                     }
                 }
+                changeDownloadStatus(-1);
             }
 
             @Override
             public void onError(String error) {
                 Log.e(TAG, error);
+                changeDownloadStatus(-1);
             }
         });
     }
@@ -351,10 +376,147 @@ public class ServiceCrack extends Service implements ServiceInterFace{
     @Override
     public void stopDownload() {
         canDownload=false;
-        downloading=false;
+        downloading=0;
         downloadFinish=false;
         totalWords=0;
         offlineWords=0;
+    }
+
+    public void downloadWordStatus(final int userid,final String token,final int bookid) {
+        Type type = new TypeToken<ArrayListResponse<WordStatus>>() {
+        }.getType();
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/downloadwordstatus", type, new GsonRequest.PostGsonRequest<ArrayListResponse>() {
+            @Override
+            public void onStart() {
+            }
+
+            @Override
+            public void onResponse(ArrayListResponse resp) {
+                if (resp.getError() != null && resp.getError() != "" || resp.getErrno() != 0) {
+                    if (resp.getErrno() != 0 || resp.getError() != "") {
+                        Log.e(TAG, "service downloadWordStatus error" + resp.getError());
+                    }
+                } else {
+                    //本地存储
+                    ArrayList<WordStatus> words = resp.getDatas();
+                    SQLiteDatabase db = globalInfo.getDb(getBaseContext());
+                    String updateSql = "update t_words set status=?,review=? where userid=? and bookid=? and id=?";
+                    for (int i = 0, size = words.size(); i < size; i++) {
+                        WordStatus word = words.get(i);
+                        Object[] args = new Object[]{word.getStatus(),word.getReview(),userid,bookid,word.getWid()};
+                        db.execSQL(updateSql, args);
+                    }
+                    Log.e(TAG, "service downloadWordStatus finish");
+                }
+            }
+
+            @Override
+            public void onError(VolleyError error) {
+                Log.e(TAG, "service downloadWordStatus error:" + error.getMessage());
+            }
+
+            @Override
+            public void setPostData(Map datas) {
+                datas.put("userid", "" + userid);
+                datas.put("token", token);
+                datas.put("bookid", "" + bookid);
+            }
+        });
+        VolleyHelper.getInstance().addToRequestQueue(gsonRequest);
+    }
+
+    private void syncBook(final int userid,final String token,final int bookid){
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/changebook", WordList.class, new GsonRequest.PostGsonRequest<WordList>() {
+            @Override
+            public void onStart() {}
+            @Override
+            public void onResponse(final WordList user) {
+                if(user.getError()!=null && user.getError()!="" || user.getErrno()!=0){
+                }else {
+                    //本地存储
+                    final String wordsStr = user.getWords();
+                    final String[] words = wordsStr.split(";");
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            for(int i=0,size=words.length;i<size;i++){
+                                String[] info = words[i].split(":");
+
+
+                                String[] where = new String[]{""+userid,""+bookid,info[0]};
+                                Cursor cursor = globalInfo.getDb(getBaseContext()).rawQuery("select count(id) as num from t_words where userid=? and bookid=? and id=?", where);
+                                if(cursor.getCount()>0) {
+                                    ContentValues values = new ContentValues();
+                                    values.put("id", info[0]);
+                                    values.put("word", info[1]);
+                                    values.put("userid", userid);
+                                    values.put("bookid", bookid);
+                                    globalInfo.getDb(getBaseContext()).insert("t_words", null, values);
+                                }
+                            }
+                            Log.e(TAG, "insert done");
+                        }
+                    }).start();
+                }
+                Cursor cursor = globalInfo.getDb(getBaseContext()).rawQuery("select count(id) as num from t_words",null);
+                while (cursor.moveToNext()){
+                    int num=cursor.getInt(0);
+                    Log.e(TAG, "size:"+num);
+                }
+                cursor.close();
+                //设置bookid
+                SharedPreferences sp = getBaseContext().getSharedPreferences("SP", MODE_PRIVATE);
+                //存入数据
+                SharedPreferences.Editor editor = sp.edit();
+                editor.putInt("bookid", bookid);
+                editor.commit();
+            }
+
+            @Override
+            public void onError(VolleyError error) {
+            }
+            @Override
+            public void setPostData(Map datas) {
+                datas.put("userid", "" + userid);
+                datas.put("token", token);
+                //datas.put("id",""+id);
+                datas.put("bookid",""+bookid);
+            }
+        });
+        VolleyHelper.getInstance().addToRequestQueue(gsonRequest);
+    }
+
+    public void checkSyncBook(final int userid,final String token,final int bookid){
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/bookinfo", Book.class, new GsonRequest.PostGsonRequest<Book>() {
+            @Override
+            public void onStart() {}
+            @Override
+            public void onResponse(Book book) {
+                if(book.getError()!=null && book.getError()!="" || book.getErrno()!=0){
+                }else {
+                    //查看本次词库大小跟线上词库大小是否相同
+                    Cursor cursor = globalInfo.getDb(getBaseContext()).rawQuery("select count(id) as num from t_words",null);
+                    if(cursor.moveToNext()){
+                        int num=cursor.getInt(0);
+                        if(num!=book.getNum()){
+                            syncBook(userid,token,bookid);
+                        }
+                    }
+                    cursor.close();
+                }
+            }
+
+            @Override
+            public void onError(VolleyError error) {
+            }
+            @Override
+            public void setPostData(Map datas) {
+                datas.put("userid", "" + userid);
+                datas.put("token", token);
+                datas.put("bookid",""+bookid);
+            }
+        });
+        VolleyHelper.getInstance().addToRequestQueue(gsonRequest);
     }
 
     class ServiceBider extends Binder implements ServiceInterFace{
@@ -376,6 +538,16 @@ public class ServiceCrack extends Service implements ServiceInterFace{
         @Override
         public boolean isDownloading() {
             return ServiceCrack.this.isDownloading();
+        }
+
+        @Override
+        public void downloadWordStatus(int userid, String token, int bookid) {
+            ServiceCrack.this.downloadWordStatus(userid, token, bookid);
+        }
+
+        @Override
+        public void checkSyncBook(int userid, String token, int bookid) {
+            ServiceCrack.this.checkSyncBook(userid,token,bookid);
         }
     }
 }

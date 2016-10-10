@@ -8,4 +8,6 @@ public interface ServiceInterFace {
     void startDownload(int userid,String token,int bookid);
     void stopDownload();
     boolean isDownloading();
+    void downloadWordStatus(int userid,String token,int bookid);
+    void checkSyncBook(int userid,String token,int bookid);
 }

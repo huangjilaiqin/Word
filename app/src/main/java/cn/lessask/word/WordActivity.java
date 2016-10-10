@@ -986,6 +986,7 @@ public class WordActivity extends AppCompatActivity {
             public void setPostData(Map datas) {
                 datas.put("userid", ""+user.getUserid());
                 datas.put("token", user.getToken());
+                datas.put("bookid",""+user.getBookid());
                 datas.put("datas",syncDatas);
             }
         });
