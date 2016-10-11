@@ -52,6 +52,10 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             serviceInterFace=(ServiceInterFace)service;
+            User user=globalInfo.getUser();
+            if(user.getBookid()!=0) {
+                serviceInterFace.checkSyncBook(user.getUserid(), user.getToken(), user.getBookid());
+            }
         }
     };
 
@@ -148,8 +152,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Intent serviceIntent = new Intent(this, ServiceCrack.class);
-        bindService(serviceIntent, connection, BIND_AUTO_CREATE);
+        serviceIntent = new Intent(this, ServiceCrack.class);
 
         setContentView(R.layout.activity_main);
         findViewById(R.id.go).setOnClickListener(new View.OnClickListener() {
@@ -213,82 +216,23 @@ public class MainActivity extends AppCompatActivity {
         String headimg = sp.getString("headimg","");
         String gender = sp.getString("gender", "");
         int bookid = sp.getInt("bookid",0);
+        Log.e(TAG, "local bookid:"+bookid);
 
         if(userid==0 || token==""){
             Intent intent = new Intent(MainActivity.this, LoginActivity.class);
             startActivityForResult(intent, LOGIN);
         }else{
-            if(nickname==""||headimg==""){
+            if(nickname==""||headimg==""||bookid==0){
                 //加载用户信息
                 loadUserInfo(userid,token);
             }else{
                 User user = new User(userid,"",nickname,token,headimg,gender,bookid);
                 globalInfo.setUser(user);
                 loadHeadImg(user.getHeadimg());
+                bindService(serviceIntent, connection, BIND_AUTO_CREATE);
             }
         }
-    }
 
-    private void changeList(final int userid,final String token,final int id,final int bookid){
-        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/changebook", WordList.class, new GsonRequest.PostGsonRequest<WordList>() {
-            @Override
-            public void onStart() {}
-            @Override
-            public void onResponse(WordList user) {
-                if(user.getError()!=null && user.getError()!="" || user.getErrno()!=0){
-                    if(user.getErrno()==601){
-                        Intent intent = new Intent(MainActivity.this, LoginActivity.class);
-                        startActivityForResult(intent, LOGIN);
-                    }else {
-                        Toast.makeText(MainActivity.this, "changeList error:" + user.getError(), Toast.LENGTH_SHORT).show();
-                    }
-                }else {
-                    //本地存储
-                    final String wordsStr = user.getWords();
-                    final String[] words = wordsStr.split(";");
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            for(int i=0,size=words.length;i<size;i++){
-                                String[] info = words[i].split(":");
-                                ContentValues values = new ContentValues();
-                                values.put("id",info[0]);
-                                values.put("word",info[1]);
-                                values.put("userid",userid);
-                                values.put("bookid",bookid);
-                                globalInfo.getDb(MainActivity.this).insert("t_words",null,values);
-                            }
-                            Log.e(TAG, "insert done");
-                        }
-                    }).start();
-                }
-                Cursor cursor = globalInfo.getDb(MainActivity.this).rawQuery("select count(id) as num from t_words",null);
-                while (cursor.moveToNext()){
-                    int num=cursor.getInt(0);
-                    Log.e(TAG, "size:"+num);
-                }
-                cursor.close();
-                //设置bookid
-                SharedPreferences sp = MainActivity.this.getSharedPreferences("SP", MODE_PRIVATE);
-                //存入数据
-                SharedPreferences.Editor editor = sp.edit();
-                editor.putInt("bookid", bookid);
-                editor.commit();
-            }
-
-            @Override
-            public void onError(VolleyError error) {
-                Toast.makeText(MainActivity.this,  error.toString(), Toast.LENGTH_SHORT).show();
-            }
-            @Override
-            public void setPostData(Map datas) {
-                datas.put("userid", "" + userid);
-                datas.put("token", token);
-                datas.put("id",""+id);
-                datas.put("bookid",""+bookid);
-            }
-        });
-        VolleyHelper.getInstance().addToRequestQueue(gsonRequest);
     }
 
     private void loadUserInfo(final int userid,final String token){
@@ -306,9 +250,11 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }else {
                     //本地存储
+                    Log.e(TAG,"bookid test:"+user.getBookid());
                     storageUser(user);
                     globalInfo.setUser(user);
                     loadHeadImg(user.getHeadimg());
+                    bindService(serviceIntent, connection, BIND_AUTO_CREATE);
                 }
             }
 
@@ -361,7 +307,8 @@ public class MainActivity extends AppCompatActivity {
         //db.execSQL("drop table t_words");
         //db.execSQL("create table t_user(userid INTEGER primary key,token text,nickname text,headimg text,gender text)");
         //db.execSQL("create table t_books(userid integer,bookid integer,completeness real,current integer)");
-        db.execSQL("create table t_words(`id` INTEGER primary key,`userid` INTEGER not null,`bookid` integer not null,`word` text not null,`usphone` text default '',`ukphone` text default '',mean text default '',sentence text default '',`review` TIMESTAMP,`status` tinyint not null default 0,`sync` tinyint not null default 1,offline tinyint not null default 0)");
+        db.execSQL("create table t_words(`id` INTEGER not null,`userid` INTEGER not null,`bookid` integer not null,`word` text not null,`usphone` text default '',`ukphone` text default '',mean text default '',sentence text default '',`review` TIMESTAMP,`status` tinyint not null default 0,`sync` tinyint not null default 1,offline tinyint not null default 0)");
+        db.execSQL("create index iduidbid on t_words(id,userid,bookid)");
 
         Log.e(TAG, "create db end");
 
@@ -385,19 +332,22 @@ public class MainActivity extends AppCompatActivity {
                     //storageUser2Db(user);
                     globalInfo.setUser(user);
                     loadHeadImg(user.getHeadimg());
-
-                    int bookid = user.getBookid();
-                    if(bookid>0){
-                        //检查t_words是否下载了相应的词库
-                        String[] where = new String[]{""+user.getUserid(),""+bookid};
-                        Cursor cursor = globalInfo.getDb(MainActivity.this).rawQuery("select count(id) as num from t_words where userid=? and bookid=?",where);
-                        if(cursor.getCount()==0)
-                            changeList(user.getUserid(),user.getToken(),0,bookid);
-                    }
+                    bindService(serviceIntent, connection, BIND_AUTO_CREATE);
 
                     break;
             }
         }
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        startService(serviceIntent); // Myservice需要在清单文件中配置
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        stopService(serviceIntent);
+    }
 }

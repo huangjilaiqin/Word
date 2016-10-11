@@ -82,7 +82,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
         SharedPreferences sp = this.getSharedPreferences("SP", MODE_PRIVATE);
         manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         userid = sp.getInt("userid", 0);
-        bookid = sp.getInt("bookid", 1);
+        bookid = sp.getInt("bookid", 0);
         timer.schedule(timerTask, 0, 600000);
     }
 
@@ -127,6 +127,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
             int status=i+1;
             Cursor cursor = globalInfo.getDb(getApplicationContext()).rawQuery(reviewSql, new String[]{"" + userid, "" + bookid,""+status});
             currentReviewSize+=cursor.getCount();
+            cursor.close();
         }
         return currentReviewSize;
     }
@@ -144,6 +145,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
         cursor = db.rawQuery(sql, new String[]{""+userid, ""+ bookid});
         cursor.moveToNext();
         offlineWords=cursor.getInt(0);
+        cursor.close();
         Log.e(TAG, "callOfflineRate totalWords:"+totalWords+", offlineWords:"+offlineWords);
         float rate=offlineWords/(totalWords*1.0f);
         return rate;
@@ -223,6 +225,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
             word.setMean(cursor.getString(2));
             words.add(word);
         }
+        cursor.close();
         return words;
     }
 
@@ -325,6 +328,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
                 mySet.add(wid);
             }
         }
+        cursor.close();
     }
 
     private void changeDownloadStatus(int step){
@@ -383,8 +387,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
     }
 
     public void downloadWordStatus(final int userid,final String token,final int bookid) {
-        Type type = new TypeToken<ArrayListResponse<WordStatus>>() {
-        }.getType();
+        Type type = new TypeToken<ArrayListResponse<WordStatus>>(){}.getType();
         GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/downloadwordstatus", type, new GsonRequest.PostGsonRequest<ArrayListResponse>() {
             @Override
             public void onStart() {
@@ -400,10 +403,11 @@ public class ServiceCrack extends Service implements ServiceInterFace{
                     //本地存储
                     ArrayList<WordStatus> words = resp.getDatas();
                     SQLiteDatabase db = globalInfo.getDb(getBaseContext());
-                    String updateSql = "update t_words set status=?,review=? where userid=? and bookid=? and id=?";
+                    //当服务器单词的状态比本地高的时候才覆盖本地状态
+                    String updateSql = "update t_words set status=?,review=? where userid=? and bookid=? and id=? and status<?";
                     for (int i = 0, size = words.size(); i < size; i++) {
                         WordStatus word = words.get(i);
-                        Object[] args = new Object[]{word.getStatus(),word.getReview(),userid,bookid,word.getWid()};
+                        Object[] args = new Object[]{word.getStatus(),word.getReview(),userid,bookid,word.getWid(),word.getStatus()};
                         db.execSQL(updateSql, args);
                     }
                     Log.e(TAG, "service downloadWordStatus finish");
@@ -432,38 +436,40 @@ public class ServiceCrack extends Service implements ServiceInterFace{
             @Override
             public void onResponse(final WordList user) {
                 if(user.getError()!=null && user.getError()!="" || user.getErrno()!=0){
-                }else {
-                    //本地存储
-                    final String wordsStr = user.getWords();
-                    final String[] words = wordsStr.split(";");
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            for(int i=0,size=words.length;i<size;i++){
-                                String[] info = words[i].split(":");
-
-
-                                String[] where = new String[]{""+userid,""+bookid,info[0]};
-                                Cursor cursor = globalInfo.getDb(getBaseContext()).rawQuery("select count(id) as num from t_words where userid=? and bookid=? and id=?", where);
-                                if(cursor.getCount()>0) {
-                                    ContentValues values = new ContentValues();
-                                    values.put("id", info[0]);
-                                    values.put("word", info[1]);
-                                    values.put("userid", userid);
-                                    values.put("bookid", bookid);
-                                    globalInfo.getDb(getBaseContext()).insert("t_words", null, values);
-                                }
+                    return;
+                }
+                //本地存储
+                final String wordsStr = user.getWords();
+                final String[] words = wordsStr.split(";");
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        SQLiteDatabase db = globalInfo.getDb(getBaseContext());
+                        String[] where = new String[]{""+userid,""+bookid,"0"};
+                        boolean isInsert=false;
+                        for(int i=0,size=words.length;i<size;i++){
+                            String[] info = words[i].split(":");
+                            where[2]=info[0];
+                            Cursor cursor = db.rawQuery("select id from t_words where userid=? and bookid=? and id=?", where);
+                            if(cursor.getCount()==0) {
+                                ContentValues values = new ContentValues();
+                                values.put("id", info[0]);
+                                values.put("word", info[1]);
+                                values.put("userid", userid);
+                                values.put("bookid", bookid);
+                                globalInfo.getDb(getBaseContext()).insert("t_words", null, values);
+                                Log.e(TAG, "have word no:"+info[0]);
+                                isInsert=true;
+                            }else{
+                                Log.e(TAG, "have word:"+info[0]);
                             }
-                            Log.e(TAG, "insert done");
+                            cursor.close();
                         }
-                    }).start();
-                }
-                Cursor cursor = globalInfo.getDb(getBaseContext()).rawQuery("select count(id) as num from t_words",null);
-                while (cursor.moveToNext()){
-                    int num=cursor.getInt(0);
-                    Log.e(TAG, "size:"+num);
-                }
-                cursor.close();
+                        Log.e(TAG, "insert done");
+                        if(isInsert)
+                            downloadWordStatus(userid,token,bookid);
+                    }
+                }).start();
                 //设置bookid
                 SharedPreferences sp = getBaseContext().getSharedPreferences("SP", MODE_PRIVATE);
                 //存入数据
@@ -487,6 +493,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
     }
 
     public void checkSyncBook(final int userid,final String token,final int bookid){
+        Log.e(TAG, "checkSyncBook bookid:"+bookid);
         GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/bookinfo", Book.class, new GsonRequest.PostGsonRequest<Book>() {
             @Override
             public void onStart() {}
