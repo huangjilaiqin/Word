@@ -4,12 +4,14 @@ import android.app.Service;
 import android.content.Context;
 import android.os.Vibrator;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RadioButton;
 import android.widget.TextView;
 
+import java.text.DecimalFormat;
 import java.util.List;
 
 import cn.lessask.word.model.Goods;
@@ -53,14 +55,13 @@ public class GoodsAdapter extends BaseRecyclerAdapter<Goods, GoodsAdapter.MyView
     @Override
     public void onBindViewHolder(MyViewHolder myHolder, final int position) {
         Goods data = getItem(position);
-        /*
+
+        myHolder.amount.setText(""+data.getAmount());
         myHolder.name.setText(data.getName());
-        if(data.getIscurrent()==1){
-            //myHolder.iscurrent.setImageResource(context.getResources().getI(R.id.qq_login));
-            myHolder.iscurrent.setChecked(true);
-        }else{
-            myHolder.iscurrent.setChecked(false);
-        }
+
+        float money = data.getMoney();
+        DecimalFormat decimalFormat=new DecimalFormat(".00");
+        myHolder.money.setText(decimalFormat.format(money));
 
         myHolder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -80,49 +81,20 @@ public class GoodsAdapter extends BaseRecyclerAdapter<Goods, GoodsAdapter.MyView
                 return false;
             }
         });
-        */
     }
 
     public class MyViewHolder extends RecyclerView.ViewHolder{
         View itemView;
+        TextView amount;
         TextView name;
-        RadioButton iscurrent;
+        TextView money;
 
         public MyViewHolder(View itemView) {
             super(itemView);
-            this.itemView = itemView;
+            this.itemView=itemView;
+            amount = (TextView)itemView.findViewById(R.id.amount);
             name = (TextView)itemView.findViewById(R.id.name);
-            iscurrent = (RadioButton)itemView.findViewById(R.id.iscurrent);
-
-            iscurrent.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    boolean isSelected=iscurrent.isSelected();
-                    List<Goods> goodss=GoodsAdapter.this.getList();
-
-                    Goods goods;
-                    /*
-                    for(int i=0,size=goodss.size();i<size;i++){
-                        goods = goodss.get(i);
-                        if(goods.getIscurrent()==1){
-                            goods.setIscurrent(0);
-                            GoodsAdapter.this.notifyItemChanged(i);
-                        }else {
-                            goods.setIscurrent(0);
-                        }
-                    }
-                    if(!isSelected) {
-                        int position = getLayoutPosition();
-                        goods = goodss.get(position);
-                        goods.setIscurrent(1);
-                        GoodsAdapter.this.notifyItemChanged(position);
-                        if(GoodsAdapter.this.onSelectListener!=null){
-                            GoodsAdapter.this.onSelectListener.onItemClick(goods);
-                        }
-                    }
-                    */
-                }
-            });
+            money = (TextView)itemView.findViewById(R.id.money);
         }
     }
 }

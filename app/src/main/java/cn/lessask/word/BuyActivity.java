@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import com.alipay.sdk.app.PayTask;
 import com.android.volley.Request;
 import com.android.volley.VolleyError;
 import com.google.gson.reflect.TypeToken;
@@ -23,11 +24,13 @@ import java.util.Map;
 import cn.lessask.word.dialog.LoadingDialog;
 import cn.lessask.word.model.ArrayListResponse;
 import cn.lessask.word.model.Goods;
+import cn.lessask.word.model.ResponseData;
 import cn.lessask.word.model.User;
 import cn.lessask.word.model.WordList;
 import cn.lessask.word.net.GsonRequest;
 import cn.lessask.word.net.VolleyHelper;
 import cn.lessask.word.recycleview.DividerItemDecoration;
+import cn.lessask.word.recycleview.OnItemClickListener;
 import cn.lessask.word.recycleview.RecyclerViewStatusSupport;
 import cn.lessask.word.util.GlobalInfo;
 import cn.lessask.word.util.OnClickListener;
@@ -89,14 +92,16 @@ public class BuyActivity extends AppCompatActivity {
             }
         });
         //设置点击事件, 编辑动作
-        /*
+        //*
         mRecyclerViewAdapter.setOnItemClickListener(new OnItemClickListener() {
             @Override
             public void onItemClick(View view, final int position) {
-                Toast.makeText(getBaseContext(), "onClick:"+position,Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "good id:"+mRecyclerViewAdapter.getItem(position).getId());
+                callAliPay2(mRecyclerViewAdapter.getItem(position).getId());
+                //Toast.makeText(getBaseContext(), "onClick:"+position,Toast.LENGTH_SHORT).show();
             }
         });
-        */
+        //*/
         mRecyclerView.setAdapter(mRecyclerViewAdapter);
         loadGoods();
     }
@@ -112,6 +117,62 @@ public class BuyActivity extends AppCompatActivity {
     public void onBackPressed() {
         //super.onBackPressed();
         onBack();
+    }
+
+    private void callAliPay2(final int goodid){
+
+        final LoadingDialog loadingDialog = new LoadingDialog(BuyActivity.this);
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://www.word.gandafu.com/buy.php", ResponseData.class, new GsonRequest.PostGsonRequest<ResponseData>() {
+            @Override
+            public void onStart() {
+                loadingDialog.show();
+            }
+            @Override
+            public void onResponse(ResponseData user) {
+                loadingDialog.cancel();
+                if(user.getError()!=null && user.getError()!="" || user.getErrno()!=0){
+                    if(user.getErrno()==601){
+                        Intent intent = new Intent(BuyActivity.this, LoginActivity.class);
+                        startActivityForResult(intent, LOGIN);
+                    }else {
+                        Toast.makeText(BuyActivity.this, user.getError(), Toast.LENGTH_SHORT).show();
+                    }
+                }else {
+                    Log.e(TAG, "callAliPay2:"+user.getData());
+                    final String orderInfo=user.getData();
+
+                    Runnable payRunnable = new Runnable() {
+                        @Override
+                        public void run() {
+                            PayTask alipay = new PayTask(BuyActivity.this);
+                            String v = alipay.getVersion();
+                            Log.e(TAG, "version:"+v);
+                            Map<String,String> result = alipay.payV2(orderInfo,true);
+                            //alipay.h5Pay(orderInfo,true);
+
+                            Log.e(TAG, "pay cb");
+
+                        }
+                    };
+                    // 必须异步调用
+                    Thread payThread = new Thread(payRunnable);
+                    payThread.start();
+
+                }
+            }
+
+            @Override
+            public void onError(VolleyError error) {
+                loadingDialog.cancel();
+                Toast.makeText(BuyActivity.this,  "网络异常,请检查网络", Toast.LENGTH_LONG).show();
+            }
+            @Override
+            public void setPostData(Map datas) {
+                datas.put("userid",""+globalInfo.getUser().getUserid());
+                datas.put("goodid",""+goodid);
+            }
+        });
+        VolleyHelper.getInstance().addToRequestQueue(gsonRequest);
     }
 
     private void loadGoods(){

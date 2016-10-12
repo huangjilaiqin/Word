@@ -17,6 +17,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -53,12 +54,14 @@ public class WordActivity extends AppCompatActivity {
 
     View wordLearn,wordReviveLayout,wordRecognize,wordInfoLayout,wordGroupLayout ;
 
+
     //新单词
     private TextView learnWord,learnUkphone;
     private TextView learnMean1,learnMean2,learnMean3,learnMean4;
     private Button learnNext;
 
     //单词详情
+    RatingBar infoStatusRating;
     private TextView infoWord,infoUkphone;
     private TextView infoMean1,infoMean2,infoMean3,infoMean4;
     private ImageView infoVoice;
@@ -69,6 +72,7 @@ public class WordActivity extends AppCompatActivity {
     private TextView groupMean1,groupMean2,groupMean3,groupMean4,groupMean5,groupMean6,groupMean7;
 
     //辨认单词
+    RatingBar recognizeStatusRating;
     private TextView recognizeWord,recognizeWordZh,recognizeUkphone;
     private SiriView recognizeSiriView;
     private TextView answera,answerb,answerc,answerd;
@@ -76,6 +80,7 @@ public class WordActivity extends AppCompatActivity {
     private int recognizeAnswer;
     private View recognizeType1,recognizeType2,recognizeType3;
 
+    RatingBar reviveStatusRating;
     private TextView reviveWord,reviveUkPhone;
     private TextView reviveMean1,reviveMean2,reviveMean3,reviveMean4;
     private Button reviveKnow,reviveUnknow;
@@ -112,13 +117,17 @@ public class WordActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         //setContentView(R.layout.activity_word);
         LayoutInflater inflater = LayoutInflater.from(this);
+
         //以上两行功能一样
         wordLearn = inflater.inflate(R.layout.word_learn,null);
         initWordLearn();
+        //回想, 1颗星
         wordReviveLayout = inflater.inflate(R.layout.word_revive, null);
         initWordRevive();
+        //错误的时候在展示单词详情
         wordInfoLayout = inflater.inflate(R.layout.word_info, null);
         initWordInfo();
+        //再认(英选中，中选英，音选英)
         wordRecognize = inflater.inflate(R.layout.word_recognize, null);
         initWordRecognize();
 
@@ -355,6 +364,8 @@ public class WordActivity extends AppCompatActivity {
     };
 
     private void initWordRecognize(){
+
+        recognizeStatusRating=(RatingBar) wordRecognize.findViewById(R.id.status);
         recognizeWord=(TextView)wordRecognize.findViewById(R.id.word);
         recognizeWordZh=(TextView)wordRecognize.findViewById(R.id.word_zh);
         recognizeSiriView=(SiriView)wordRecognize.findViewById(R.id.siriView);
@@ -459,6 +470,7 @@ public class WordActivity extends AppCompatActivity {
 
     private void setWordRecognizeLayout(Word word){
         int type=word.getRecognizeType();
+        recognizeStatusRating.setRating(word.getStatus());
         if(type==1) {
             recognizeType1.setVisibility(View.VISIBLE);
             recognizeType2.setVisibility(View.INVISIBLE);
@@ -620,6 +632,7 @@ public class WordActivity extends AppCompatActivity {
     }
 
     private void setWordInfoLayout(Word word){
+        infoStatusRating.setRating(word.getStatus());
         infoWord.setText(word.getWord());
         infoUkphone.setText("/"+word.getUkphone()+"/");
 
@@ -656,6 +669,7 @@ public class WordActivity extends AppCompatActivity {
     }
 
     private void initWordLearn(){
+        infoStatusRating=(RatingBar)wordLearn.findViewById(R.id.status);
         learnWord=(TextView) wordLearn.findViewById(R.id.word);
         learnNext = (Button)wordLearn.findViewById(R.id.next);
         learnNext.setOnClickListener(new View.OnClickListener() {
@@ -674,7 +688,7 @@ public class WordActivity extends AppCompatActivity {
     }
 
     private void setWordLearnLayout(Word word){
-
+        infoStatusRating.setRating(word.getStatus());
         //设置数据
         learnWord.setText(word.getWord());
 
@@ -714,6 +728,7 @@ public class WordActivity extends AppCompatActivity {
 
 
     private void initWordRevive(){
+        reviveStatusRating=(RatingBar)wordReviveLayout.findViewById(R.id.status);
         reviveWord=(TextView)wordReviveLayout.findViewById(R.id.word);
         reviveKnow = (Button)wordReviveLayout.findViewById(R.id.know);
         reviveKnow.setOnClickListener(new View.OnClickListener() {
@@ -752,6 +767,7 @@ public class WordActivity extends AppCompatActivity {
 
 
     private void setWordReviveLayout(Word word){
+        reviveStatusRating.setRating(word.getStatus());
         reviveMeanings.setVisibility(View.INVISIBLE);
         reviveCircle.setVisibility(View.VISIBLE);
         new android.os.Handler().postDelayed(

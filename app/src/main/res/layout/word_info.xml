@@ -8,6 +8,18 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="cn.lessask.word.WordActivity">
 
+    <RatingBar
+        android:id="@+id/status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="16dp"
+        android:numStars="5"
+        android:rating="1"
+        style="?android:attr/ratingBarStyleSmall"
+        />
+
     <TextView
         android:id="@+id/word"
         android:layout_width="wrap_content"

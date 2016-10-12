@@ -3,21 +3,43 @@
     android:layout_width="match_parent"
     android:layout_height="56dp">
     <TextView
-        android:id="@+id/name"
+        android:id="@+id/amount"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:layout_marginLeft="18dp"
         android:textSize="18sp"
-        android:text="四级"
+        android:text="70"
         />
-    <RadioButton
-        android:id="@+id/iscurrent"
+    <TextView
+        android:id="@+id/name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="2dp"
+        android:layout_toRightOf="@id/amount"
+        android:textSize="18sp"
+        android:text="元宝"
+        />
+
+    <TextView
+        android:id="@+id/money"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:layout_alignParentRight="true"
         android:layout_marginRight="16dp"
+        android:textSize="18sp"
+        android:text="7.00"
+        />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_toLeftOf="@id/money"
+        android:layout_marginRight="2dp"
+        android:textSize="18sp"
+        android:text="¥"
         />
 
 </RelativeLayout>
