@@ -74,6 +74,7 @@
             android:screenOrientation="portrait" />
         <activity android:name=".PersionalActivity"></activity>
         <activity android:name=".SelectBookActivity"></activity>
+        <activity android:name=".BuyActivity"></activity>
     </application>
 
 </manifest>

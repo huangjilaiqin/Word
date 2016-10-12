@@ -49,6 +49,7 @@ public class PersionalActivity extends AppCompatActivity {
     private final int GET_BOOK_NAME =4;
 
     private final int CHANGE_BOOK=1;
+    private final int BUY=1;
 
     private ServiceInterFace serviceInterFace;
     private Intent serviceIntent;
@@ -127,7 +128,8 @@ public class PersionalActivity extends AppCompatActivity {
         findViewById(R.id.purch).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                Intent intent = new Intent(PersionalActivity.this, BuyActivity.class);
+                startActivityForResult(intent, BUY);
             }
         });
         loadHeadImg(user.getHeadimg());
