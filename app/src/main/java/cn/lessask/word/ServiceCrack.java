@@ -458,10 +458,10 @@ public class ServiceCrack extends Service implements ServiceInterFace{
                                 values.put("userid", userid);
                                 values.put("bookid", bookid);
                                 globalInfo.getDb(getBaseContext()).insert("t_words", null, values);
-                                Log.e(TAG, "have word no:"+info[0]);
+                                //Log.e(TAG, "have word no:"+info[0]);
                                 isInsert=true;
                             }else{
-                                Log.e(TAG, "have word:"+info[0]);
+                                //Log.e(TAG, "have word:"+info[0]);
                             }
                             cursor.close();
                         }

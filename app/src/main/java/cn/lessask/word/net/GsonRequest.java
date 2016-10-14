@@ -19,7 +19,7 @@ import java.util.Map;
 
 public class GsonRequest<T> extends Request<T> {
     private final String TAG = GsonRequest.class.getSimpleName();
-    private final Gson gson = new Gson();
+    private Gson gson = new Gson();
     private final Class<T> clazz;
     private final Type type;
     private final Response.Listener<T> listener;
@@ -79,6 +79,9 @@ public class GsonRequest<T> extends Request<T> {
         void setPostData(Map datas);
     }
 
+    public void setGson(Gson gson) {
+        this.gson = gson;
+    }
 
     @Override
     protected Map<String, String> getParams() throws AuthFailureError {

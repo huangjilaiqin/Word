@@ -19,6 +19,83 @@
         />
 
     <RelativeLayout
+        android:layout_below="@id/head_img"
+        android:layout_marginTop="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="124dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        >
+        <cn.lessask.word.recycleview.RecyclerViewStatusSupport
+            android:id="@+id/list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#f6f6f6"
+            android:scrollbars="none"
+            android:gravity="center"
+            />
+        <RelativeLayout
+            android:id="@+id/empty_view"
+            android:background="@color/background_white_not_transparent"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <Button
+                android:id="@+id/start"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/btn_bg"
+                android:layout_centerInParent="true"
+                android:text="开启"
+                />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:textSize="16sp"
+                android:text="您尚未开启作死背单词历程"
+                android:layout_above="@id/start"
+                android:layout_marginBottom="6dp"
+                />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/loading_view"
+            android:background="@color/background_white_not_transparent"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="loading"
+                />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/error_view"
+            android:background="@color/background_white_not_transparent"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <TextView
+                android:id="@+id/error_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="error"
+                />
+            <Button
+                android:id="@+id/refresh"
+                android:layout_below="@id/error_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="刷新"
+                />
+        </RelativeLayout>
+    </RelativeLayout>
+
+    <RelativeLayout
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_width="wrap_content"

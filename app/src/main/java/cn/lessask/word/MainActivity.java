@@ -12,8 +12,10 @@ import android.os.IBinder;
 import android.support.v4.view.animation.LinearOutSlowInInterpolator;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.CalendarView;
 import android.widget.Toast;
 
@@ -21,28 +23,42 @@ import com.alipay.sdk.app.PayTask;
 import com.android.volley.Request;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader;
+import com.facebook.stetho.common.Util;
+import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Map;
 
 import cn.lessask.word.alipay.OrderInfoUtil2_0;
+import cn.lessask.word.model.ArrayListResponse;
 import cn.lessask.word.model.Response;
 import cn.lessask.word.model.ResponseData;
+import cn.lessask.word.model.Sign;
 import cn.lessask.word.model.User;
 import cn.lessask.word.model.WordList;
 import cn.lessask.word.net.GsonRequest;
 import cn.lessask.word.net.VolleyHelper;
+import cn.lessask.word.recycleview.DividerItemDecoration;
+import cn.lessask.word.recycleview.RecyclerViewStatusSupport;
 import cn.lessask.word.util.GlobalInfo;
+import cn.lessask.word.util.TimeHelper;
 import de.hdodenhof.circleimageview.CircleImageView;
 
 public class MainActivity extends AppCompatActivity {
     private String TAG = MainActivity.class.getSimpleName();
     private final int LOGIN=1;
+    private VolleyHelper volleyHelper = VolleyHelper.getInstance();
     private CircleImageView headImg;
+    private RecyclerViewStatusSupport mRecyclerView;
+    private LinearLayoutManager mLinearLayoutManager;
+    private SignAdapter mRecyclerViewAdapter;
 
     private GlobalInfo globalInfo=GlobalInfo.getInstance();
 
     private ServiceInterFace serviceInterFace;
     private Intent serviceIntent;
+    private Button start;
 
     private ServiceConnection connection = new ServiceConnection() {
 
@@ -115,38 +131,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         VolleyHelper.getInstance().addToRequestQueue(gsonRequest);
-
-        /*
-        Map<String, String> params = OrderInfoUtil2_0.buildOrderParamMap(APPID);
-        String orderParam = OrderInfoUtil2_0.buildOrderParam(params);
-        Log.e(TAG, "orderParam "+orderParam);
-        String sign = OrderInfoUtil2_0.getSign(params, RSA_PRIVATE);
-        Log.e(TAG, "sign "+sign);
-        final String orderInfo = orderParam + "&" + sign;
-
-        Log.e(TAG, "orderInfo: "+orderInfo);
-
-        Runnable payRunnable = new Runnable() {
-            @Override
-            public void run() {
-                PayTask alipay = new PayTask(MainActivity.this);
-                String v = alipay.getVersion();
-                Log.e(TAG, "version:"+v);
-                Map<String,String> result = alipay.payV2(orderInfo,true);
-                //alipay.h5Pay(orderInfo,true);
-
-
-                Log.e(TAG, "pay cb");
-                //Message msg = new Message();
-                //msg.what = SDK_PAY_FLAG;
-                //msg.obj = result;
-                //mHandler.sendMessage(msg);
-            }
-        };
-        // 必须异步调用
-        Thread payThread = new Thread(payRunnable);
-        payThread.start();
-        */
     }
 
     @Override
@@ -156,6 +140,26 @@ public class MainActivity extends AppCompatActivity {
         serviceIntent = new Intent(this, ServiceCrack.class);
 
         setContentView(R.layout.activity_main);
+
+        mRecyclerView = (RecyclerViewStatusSupport)findViewById(R.id.list);
+        mRecyclerView.setStatusViews(findViewById(R.id.loading_view), findViewById(R.id.empty_view), findViewById(R.id.error_view));
+
+        mLinearLayoutManager = new LinearLayoutManager(this);
+        mLinearLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
+        mRecyclerView.setLayoutManager(mLinearLayoutManager);
+        //mRecyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.HORIZONTAL_LIST));
+        mRecyclerView.setClickable(true);
+
+        mRecyclerViewAdapter = new SignAdapter(getBaseContext());
+        mRecyclerView.setAdapter(mRecyclerViewAdapter);
+
+        findViewById(R.id.start).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+
         findViewById(R.id.go).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -231,9 +235,13 @@ public class MainActivity extends AppCompatActivity {
                 globalInfo.setUser(user);
                 loadHeadImg(user.getHeadimg());
                 bindService(serviceIntent, connection, BIND_AUTO_CREATE);
+                atferLoadUser();
             }
         }
+    }
 
+    private void atferLoadUser(){
+        loadSign();
     }
 
     private void loadUserInfo(final int userid,final String token){
@@ -256,6 +264,7 @@ public class MainActivity extends AppCompatActivity {
                     globalInfo.setUser(user);
                     loadHeadImg(user.getHeadimg());
                     bindService(serviceIntent, connection, BIND_AUTO_CREATE);
+                    atferLoadUser();
                 }
             }
 
@@ -290,11 +299,11 @@ public class MainActivity extends AppCompatActivity {
     }
     private void storageUser2Db(User user){
         ContentValues values = new ContentValues();
-        values.put("userid",user.getUserid());
+        values.put("userid", user.getUserid());
         values.put("token", user.getToken());
         values.put("nickname", user.getNickname());
         values.put("headimg", user.getHeadimg());
-        values.put("gender",user.getGender());
+        values.put("gender", user.getGender());
         globalInfo.getDb(MainActivity.this).insert("t_user", null, values);
 
     }
@@ -315,7 +324,7 @@ public class MainActivity extends AppCompatActivity {
 
         editor.putBoolean("initDb", true);
         editor.commit();
-        Toast.makeText(MainActivity.this,"initDb",Toast.LENGTH_SHORT).show();
+        Toast.makeText(MainActivity.this, "initDb", Toast.LENGTH_SHORT).show();
 
     }
 
@@ -335,6 +344,7 @@ public class MainActivity extends AppCompatActivity {
                     loadHeadImg(user.getHeadimg());
                     bindService(serviceIntent, connection, BIND_AUTO_CREATE);
 
+                    atferLoadUser();
                     break;
             }
         }
@@ -350,5 +360,46 @@ public class MainActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         stopService(serviceIntent);
+    }
+
+    private void loadSign(){
+        Type type = new TypeToken<ArrayListResponse<Sign>>() {}.getType();
+
+        String url = "http://120.24.75.92:5006/word/sign";
+
+        GsonRequest gsonRequest = new GsonRequest<ArrayListResponse<Sign>>(Request.Method.POST,url,type,new GsonRequest.PostGsonRequest<ArrayListResponse<Sign>>(){
+            @Override
+            public void onStart() {
+                mRecyclerView.showLoadingView();
+            }
+
+            @Override
+            public void onResponse(ArrayListResponse<Sign> response) {
+                if(response.getError()!=null || response.getErrno()!=0){
+                    mRecyclerView.showErrorView(response.getError());
+                    Toast.makeText(MainActivity.this, response.getError(), Toast.LENGTH_SHORT).show();
+                }else {
+                    List<Sign> signs = response.getDatas();
+                    mRecyclerViewAdapter.appendToList(signs);
+                    mRecyclerViewAdapter.notifyDataSetChanged();
+                }
+            }
+
+            @Override
+            public void onError(VolleyError error) {
+                mRecyclerView.showErrorView(error.toString());
+            }
+
+            @Override
+            public void setPostData(Map datas) {
+                User user=globalInfo.getUser();
+                datas.put("userid", "" + user.getUserid());
+                datas.put("token", "" + user.getToken());
+            }
+
+        });
+        //gsonRequest.setGson(TimeHelper.gsonWithDate());
+        gsonRequest.setGson(TimeHelper.gsonWithNodeDate());
+        volleyHelper.addToRequestQueue(gsonRequest);
     }
 }
