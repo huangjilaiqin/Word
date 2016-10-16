@@ -87,7 +87,7 @@ public class WordActivity extends AppCompatActivity {
     private CircleProgressView reviveCircle;
     private LinearLayout reviveMeanings;
 
-    private int thinkTimes = 3000;
+    private int thinkTimes = 4000;
 
     private ArrayList<Word> learnWords;
     private StringBuilder notSyncWords=new StringBuilder();
@@ -610,6 +610,7 @@ public class WordActivity extends AppCompatActivity {
     }
 
     private void initWordInfo(){
+        infoStatusRating=(RatingBar)wordInfoLayout.findViewById(R.id.status);
         infoWord=(TextView)wordInfoLayout.findViewById(R.id.word);
         infoUkphone=(TextView)wordInfoLayout.findViewById(R.id.ukphone);
         wordInfoLayout.findViewById(R.id.voice).setOnClickListener(new View.OnClickListener() {
@@ -632,6 +633,7 @@ public class WordActivity extends AppCompatActivity {
     }
 
     private void setWordInfoLayout(Word word){
+        Log.e(TAG, "setWordInfoLayout:"+word.getStatus());
         infoStatusRating.setRating(word.getStatus());
         infoWord.setText(word.getWord());
         infoUkphone.setText("/"+word.getUkphone()+"/");
@@ -669,7 +671,6 @@ public class WordActivity extends AppCompatActivity {
     }
 
     private void initWordLearn(){
-        infoStatusRating=(RatingBar)wordLearn.findViewById(R.id.status);
         learnWord=(TextView) wordLearn.findViewById(R.id.word);
         learnNext = (Button)wordLearn.findViewById(R.id.next);
         learnNext.setOnClickListener(new View.OnClickListener() {
@@ -871,6 +872,7 @@ public class WordActivity extends AppCompatActivity {
         int id = word.getId();
         int status = word.getStatus();
         status+=step;
+        word.setStatus(status);
         Date now = new Date();
         //review表示最近一次复习时间
         Date review = new Date(now.getTime());

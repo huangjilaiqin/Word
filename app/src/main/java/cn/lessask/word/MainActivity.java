@@ -27,10 +27,12 @@ import com.facebook.stetho.common.Util;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import cn.lessask.word.alipay.OrderInfoUtil2_0;
+import cn.lessask.word.dialog.LoadingDialog;
 import cn.lessask.word.model.ArrayListResponse;
 import cn.lessask.word.model.Response;
 import cn.lessask.word.model.ResponseData;
@@ -156,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.start).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                buy();
             }
         });
 
@@ -402,4 +404,64 @@ public class MainActivity extends AppCompatActivity {
         gsonRequest.setGson(TimeHelper.gsonWithNodeDate());
         volleyHelper.addToRequestQueue(gsonRequest);
     }
+
+    private void buy(){
+        final LoadingDialog loadingDialog = new LoadingDialog(this);
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://www.word.gandafu.com/buy.php", ResponseData.class, new GsonRequest.PostGsonRequest<ResponseData>() {
+            @Override
+            public void onStart() {
+                loadingDialog.show();
+            }
+            @Override
+            public void onResponse(ResponseData user) {
+                loadingDialog.cancel();
+                if(user.getError()!=null && user.getError()!="" || user.getErrno()!=0){
+                    if(user.getErrno()==601){
+                        Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+                        startActivityForResult(intent, LOGIN);
+                    }else {
+                        Toast.makeText(MainActivity.this, user.getError(), Toast.LENGTH_SHORT).show();
+                    }
+                }else {
+                    Log.e(TAG, "callAliPay2:"+user.getData());
+                    final String orderInfo=user.getData();
+
+                    Runnable payRunnable = new Runnable() {
+                        @Override
+                        public void run() {
+                            PayTask alipay = new PayTask(MainActivity.this);
+                            String v = alipay.getVersion();
+                            Log.e(TAG, "version:"+v);
+                            Map<String,String> result = alipay.payV2(orderInfo,true);
+                            //alipay.h5Pay(orderInfo,true);
+
+                            Log.e(TAG, "pay cb");
+
+                        }
+                    };
+                    // 必须异步调用
+                    Thread payThread = new Thread(payRunnable);
+                    payThread.start();
+
+                }
+            }
+
+            @Override
+            public void onError(VolleyError error) {
+                loadingDialog.cancel();
+                Toast.makeText(MainActivity.this,  error.toString(), Toast.LENGTH_SHORT).show();
+            }
+            @Override
+            public void setPostData(Map datas) {
+                datas.put("userid",""+globalInfo.getUser().getUserid());
+                datas.put("contractid","0");
+                datas.put("wordnum","20");
+                datas.put("tradetype","1");
+                datas.put("tradeplat","1");
+            }
+        });
+        VolleyHelper.getInstance().addToRequestQueue(gsonRequest);
+    }
 }
+
+
