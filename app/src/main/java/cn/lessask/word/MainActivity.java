@@ -8,7 +8,9 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Paint;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.support.v4.view.animation.LinearOutSlowInInterpolator;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -31,9 +33,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import at.grabner.circleprogress.AnimationState;
+import at.grabner.circleprogress.AnimationStateChangedListener;
+import at.grabner.circleprogress.CircleProgressView;
+import at.grabner.circleprogress.TextMode;
 import cn.lessask.word.alipay.OrderInfoUtil2_0;
 import cn.lessask.word.dialog.LoadingDialog;
 import cn.lessask.word.model.ArrayListResponse;
+import cn.lessask.word.model.MainInfo;
 import cn.lessask.word.model.Response;
 import cn.lessask.word.model.ResponseData;
 import cn.lessask.word.model.Sign;
@@ -60,7 +67,43 @@ public class MainActivity extends AppCompatActivity {
 
     private ServiceInterFace serviceInterFace;
     private Intent serviceIntent;
-    private Button start;
+
+    private CircleProgressView toLearnProgress;
+    private CircleProgressView toReviveProgress;
+
+    private final int GET_MININFO=1;
+    private Handler handler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            SharedPreferences sp = MainActivity.this.getSharedPreferences("SP", MODE_PRIVATE);
+            switch (msg.what){
+                case GET_MININFO:
+                    MainInfo info=(MainInfo)msg.obj;
+                    int newnum=0,revivenum=0,wordnum=0;
+                    if(info!=null){
+                        newnum=info.getNewnum();
+                        revivenum=info.getRevivenum();
+                        wordnum=info.getWordnum();
+                    }else{
+                        newnum=sp.getInt("newnum",0);
+                        revivenum=sp.getInt("revivenum",0);
+                        wordnum=sp.getInt("wordnum",20);
+                    }
+                    toLearnProgress.setMaxValue(wordnum);
+                    toLearnProgress.setValue(newnum);
+                    toLearnProgress.setText(newnum + "/" + wordnum);
+
+                    //获取需要复习的个数
+                    User user=globalInfo.getUser();
+                    int torevive=queryReviveSized(user.getUserid(),user.getBookid());
+                    int total=torevive+revivenum;
+                    toReviveProgress.setMaxValue(total);
+                    toReviveProgress.setValue(revivenum);
+                    toReviveProgress.setText(revivenum+"/"+total);
+                    break;
+            }
+        }
+    };
 
     private ServiceConnection connection = new ServiceConnection() {
 
@@ -155,6 +198,11 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerViewAdapter = new SignAdapter(getBaseContext());
         mRecyclerView.setAdapter(mRecyclerViewAdapter);
 
+        toLearnProgress=(CircleProgressView)findViewById(R.id.tolearn);
+        toLearnProgress.setTextMode(TextMode.TEXT);
+        toReviveProgress=(CircleProgressView)findViewById(R.id.torevive);
+        toReviveProgress.setTextMode(TextMode.TEXT);
+
         findViewById(R.id.start).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -243,7 +291,57 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void atferLoadUser(){
+        User user=globalInfo.getUser();
         loadSign();
+        loadMainInfo(user.getUserid(),user.getToken());
+    }
+
+    private void loadMainInfo(final int userid,final String token){
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/maininfo", MainInfo.class, new GsonRequest.PostGsonRequest<MainInfo>() {
+            @Override
+            public void onStart() {}
+            @Override
+            public void onResponse(MainInfo data) {
+                if(data.getError()!=null && data.getError()!="" || data.getErrno()!=0){
+                    if(data.getErrno()==601){
+                        Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+                        startActivityForResult(intent, LOGIN);
+                    }else {
+                        Toast.makeText(MainActivity.this, "uploadUserInfo error:" + data.getError(), Toast.LENGTH_SHORT).show();
+                    }
+                    return;
+                }else {
+                    //本地存储
+                    SharedPreferences sp = MainActivity.this.getSharedPreferences("SP", MODE_PRIVATE);
+                    //存入数据
+                    SharedPreferences.Editor editor = sp.edit();
+                    editor.putInt("newnum", data.getNewnum());
+                    editor.putInt("revivenum", data.getRevivenum());
+                    editor.putInt("wordnum", data.getWordnum());
+                    editor.commit();
+
+                    Message msg=new Message();
+                    msg.what=GET_MININFO;
+                    msg.obj=data;
+                    handler.sendMessage(msg);
+                }
+            }
+
+            @Override
+            public void onError(VolleyError error) {
+                Toast.makeText(MainActivity.this,  error.toString(), Toast.LENGTH_SHORT).show();
+                Message msg=new Message();
+                msg.what=GET_MININFO;
+                msg.obj=null;
+                handler.sendMessage(msg);
+            }
+            @Override
+            public void setPostData(Map datas) {
+                datas.put("userid", "" + userid);
+                datas.put("token", token);
+            }
+        });
+        VolleyHelper.getInstance().addToRequestQueue(gsonRequest);
     }
 
     private void loadUserInfo(final int userid,final String token){
@@ -261,7 +359,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }else {
                     //本地存储
-                    Log.e(TAG,"bookid test:"+user.getBookid());
+                    Log.e(TAG, "bookid test:" + user.getBookid());
                     storageUser(user);
                     globalInfo.setUser(user);
                     loadHeadImg(user.getHeadimg());
@@ -461,6 +559,19 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         VolleyHelper.getInstance().addToRequestQueue(gsonRequest);
+    }
+    private int queryReviveSized(int userid,int bookid){
+        String [] timeDelta = new String[]{"-5 minute","-30 minute","-480 minute","-720 minute"};
+        //i对应的就是status的值
+        int toReviveSize=0;
+        for(int i=0,size=timeDelta.length;i<size;i++) {
+            String reviewSql = "select id from t_words where userid=? and bookid=? and status=? and review<strftime('%s','now', '"+timeDelta[i]+"')";
+            int status=i+1;
+            Cursor cursor = globalInfo.getDb(getApplicationContext()).rawQuery(reviewSql, new String[]{"" + userid, "" + bookid,""+status});
+            toReviveSize+=cursor.getCount();
+            cursor.close();
+        }
+        return toReviveSize;
     }
 }
 

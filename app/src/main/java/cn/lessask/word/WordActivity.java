@@ -131,7 +131,6 @@ public class WordActivity extends AppCompatActivity {
         wordRecognize = inflater.inflate(R.layout.word_recognize, null);
         initWordRecognize();
 
-
         wordGroupLayout = inflater.inflate(R.layout.word_group, null);
         initWordGroup();
 

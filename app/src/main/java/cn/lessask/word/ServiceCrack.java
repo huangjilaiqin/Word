@@ -49,6 +49,8 @@ public class ServiceCrack extends Service implements ServiceInterFace{
     private int reviewSize=0;
     private ServiceBider serviceBider;
     private NetworkFileHelper networkFileHelper = NetworkFileHelper.getInstance();
+    private SharedPreferences sp;
+    private SharedPreferences.Editor editor;
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -79,7 +81,8 @@ public class ServiceCrack extends Service implements ServiceInterFace{
     public void onCreate() {
         super.onCreate();
         Log.d("TAG2","test service");
-        SharedPreferences sp = this.getSharedPreferences("SP", MODE_PRIVATE);
+        sp = this.getSharedPreferences("SP", MODE_PRIVATE);
+        editor = sp.edit();
         manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         userid = sp.getInt("userid", 0);
         bookid = sp.getInt("bookid", 0);
@@ -123,12 +126,14 @@ public class ServiceCrack extends Service implements ServiceInterFace{
         //i对应的就是status的值
         int currentReviewSize=0;
         for(int i=0,size=timeDelta.length;i<size;i++) {
-            String reviewSql = "select id,word,usphone,ukphone,mean,sentence,review from t_words where userid=? and bookid=? and status=? and review<strftime('%s','now', '"+timeDelta[i]+"')";
+            String reviewSql = "select id from t_words where userid=? and bookid=? and status=? and review<strftime('%s','now', '"+timeDelta[i]+"')";
             int status=i+1;
             Cursor cursor = globalInfo.getDb(getApplicationContext()).rawQuery(reviewSql, new String[]{"" + userid, "" + bookid,""+status});
             currentReviewSize+=cursor.getCount();
             cursor.close();
         }
+        editor.putInt("torevive",currentReviewSize);
+        editor.commit();
         return currentReviewSize;
     }
 
