@@ -2,6 +2,7 @@ package cn.lessask.word;
 
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.media.MediaPlayer;
@@ -53,6 +54,8 @@ public class WordActivity extends AppCompatActivity {
     private GlobalInfo globalInfo = GlobalInfo.getInstance();
 
     View wordLearn,wordReviveLayout,wordRecognize,wordInfoLayout,wordGroupLayout ;
+    SharedPreferences sp;
+    SharedPreferences.Editor editor;
 
 
     //新单词
@@ -117,6 +120,8 @@ public class WordActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         //setContentView(R.layout.activity_word);
         LayoutInflater inflater = LayoutInflater.from(this);
+        sp = this.getSharedPreferences("SP", MODE_PRIVATE);
+        editor = sp.edit();
 
         //以上两行功能一样
         wordLearn = inflater.inflate(R.layout.word_learn,null);
@@ -169,13 +174,14 @@ public class WordActivity extends AppCompatActivity {
     }
 
     @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
-            syncWords(user.getUserid(),user.getBookid());
-            finish();
-            return true;
-        }else
-            return super.onKeyDown(keyCode, event);
+    public void onBackPressed() {
+        onBack();
+    }
+
+    private void onBack(){
+        syncWords(user.getUserid(),user.getBookid());
+        WordActivity.this.setResult(RESULT_OK,getIntent());
+        finish();
     }
 
     private void showWord(){
@@ -954,20 +960,31 @@ public class WordActivity extends AppCompatActivity {
         int count = cursor.getCount();
         if(count==0)
             return;
+        int status=0,newnum=0,revivenum=0;
         for(int i=0;i<count;i++){
             cursor.moveToNext();
             int id = cursor.getInt(0);
             builder.append(id);
             idsBuilder.append(id);
             builder.append(",");
-            builder.append(cursor.getInt(1));
+            status=cursor.getInt(1);
+            builder.append(status);
             builder.append(",");
             builder.append(cursor.getInt(2));
             if(i+1<count){
                 builder.append(";");
                 idsBuilder.append(",");
             }
+            if(status==3)
+                newnum++;
+            if(status>1)
+                revivenum++;
         }
+        Log.e(TAG, "syncWords newnum:"+newnum+", revivenum:"+revivenum);
+        editor.putInt("newnum",sp.getInt("newnum",0)+newnum);
+        editor.putInt("revivenum",sp.getInt("revivenum",0)+revivenum);
+        editor.commit();
+
         final String syncDatas=builder.toString();
         final String syncIds=idsBuilder.toString();
         Log.e(TAG, "sync:"+syncDatas);
@@ -997,7 +1014,7 @@ public class WordActivity extends AppCompatActivity {
             @Override
             public void onError(VolleyError error) {
                 loadingDialog.cancel();
-                Toast.makeText(WordActivity.this,  error.toString(), Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "upwordstatus:"+error.toString());
             }
             @Override
             public void setPostData(Map datas) {

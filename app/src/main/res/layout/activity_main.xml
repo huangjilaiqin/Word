@@ -79,21 +79,26 @@
             android:background="@color/background_white_not_transparent"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
+            <Button
+                android:id="@+id/refresh"
+                android:layout_width="56dp"
+                android:layout_height="36dp"
+                android:layout_centerHorizontal="true"
+                android:layout_alignParentBottom="true"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/btn_bg"
+                android:text="刷新"
+                />
             <TextView
                 android:id="@+id/error_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
+                android:layout_centerHorizontal="true"
+                android:layout_above="@id/refresh"
+                android:layout_marginBottom="8dp"
                 android:text="error"
                 />
-            <Button
-                android:id="@+id/refresh"
-                android:layout_below="@id/error_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:text="刷新"
-                />
+
         </RelativeLayout>
     </RelativeLayout>
 

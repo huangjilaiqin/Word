@@ -57,11 +57,13 @@ import de.hdodenhof.circleimageview.CircleImageView;
 public class MainActivity extends AppCompatActivity {
     private String TAG = MainActivity.class.getSimpleName();
     private final int LOGIN=1;
+    private final int LEARN_WORD=2;
     private VolleyHelper volleyHelper = VolleyHelper.getInstance();
     private CircleImageView headImg;
     private RecyclerViewStatusSupport mRecyclerView;
     private LinearLayoutManager mLinearLayoutManager;
     private SignAdapter mRecyclerViewAdapter;
+    private Button signReload;
 
     private GlobalInfo globalInfo=GlobalInfo.getInstance();
 
@@ -188,6 +190,12 @@ public class MainActivity extends AppCompatActivity {
 
         mRecyclerView = (RecyclerViewStatusSupport)findViewById(R.id.list);
         mRecyclerView.setStatusViews(findViewById(R.id.loading_view), findViewById(R.id.empty_view), findViewById(R.id.error_view));
+        findViewById(R.id.refresh).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                loadSign();
+            }
+        });
 
         mLinearLayoutManager = new LinearLayoutManager(this);
         mLinearLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
@@ -215,7 +223,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if(globalInfo.getUser().getBookid()>0) {
                     Intent intent = new Intent(MainActivity.this, WordActivity.class);
-                    startActivity(intent);
+                    startActivityForResult(intent,LEARN_WORD);
                 }else{
                     Intent intent = new Intent(MainActivity.this, SelectBookActivity.class);
                     startActivity(intent);
@@ -302,6 +310,8 @@ public class MainActivity extends AppCompatActivity {
             public void onStart() {}
             @Override
             public void onResponse(MainInfo data) {
+                Message msg=new Message();
+                msg.what=GET_MININFO;
                 if(data.getError()!=null && data.getError()!="" || data.getErrno()!=0){
                     if(data.getErrno()==601){
                         Intent intent = new Intent(MainActivity.this, LoginActivity.class);
@@ -309,7 +319,7 @@ public class MainActivity extends AppCompatActivity {
                     }else {
                         Toast.makeText(MainActivity.this, "uploadUserInfo error:" + data.getError(), Toast.LENGTH_SHORT).show();
                     }
-                    return;
+                    msg.obj=null;
                 }else {
                     //本地存储
                     SharedPreferences sp = MainActivity.this.getSharedPreferences("SP", MODE_PRIVATE);
@@ -320,16 +330,16 @@ public class MainActivity extends AppCompatActivity {
                     editor.putInt("wordnum", data.getWordnum());
                     editor.commit();
 
-                    Message msg=new Message();
-                    msg.what=GET_MININFO;
                     msg.obj=data;
-                    handler.sendMessage(msg);
                 }
+                msg.what=GET_MININFO;
+                msg.obj=data;
+                handler.sendMessage(msg);
             }
 
             @Override
             public void onError(VolleyError error) {
-                Toast.makeText(MainActivity.this,  error.toString(), Toast.LENGTH_SHORT).show();
+                //Toast.makeText(MainActivity.this,  error.toString(), Toast.LENGTH_SHORT).show();
                 Message msg=new Message();
                 msg.what=GET_MININFO;
                 msg.obj=null;
@@ -370,7 +380,8 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onError(VolleyError error) {
-                Toast.makeText(MainActivity.this,  error.toString(), Toast.LENGTH_SHORT).show();
+                Log.e(TAG,error.toString());
+                Toast.makeText(MainActivity.this,  "网络错误，请检查网络", Toast.LENGTH_SHORT).show();
             }
             @Override
             public void setPostData(Map datas) {
@@ -424,7 +435,6 @@ public class MainActivity extends AppCompatActivity {
 
         editor.putBoolean("initDb", true);
         editor.commit();
-        Toast.makeText(MainActivity.this, "initDb", Toast.LENGTH_SHORT).show();
 
     }
 
@@ -445,6 +455,11 @@ public class MainActivity extends AppCompatActivity {
                     bindService(serviceIntent, connection, BIND_AUTO_CREATE);
 
                     atferLoadUser();
+                    break;
+                case LEARN_WORD:
+                    User user1=globalInfo.getUser();
+                    Log.e(TAG, "learn_word");
+                    loadMainInfo(user1.getUserid(),user1.getToken());
                     break;
             }
         }
@@ -487,7 +502,8 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onError(VolleyError error) {
-                mRecyclerView.showErrorView(error.toString());
+                Log.e(TAG,error.toString());
+                mRecyclerView.showErrorView("请检查网络！");
             }
 
             @Override
@@ -547,7 +563,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onError(VolleyError error) {
                 loadingDialog.cancel();
-                Toast.makeText(MainActivity.this,  error.toString(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this,  "网络错误，请检查网络", Toast.LENGTH_SHORT).show();
             }
             @Override
             public void setPostData(Map datas) {
