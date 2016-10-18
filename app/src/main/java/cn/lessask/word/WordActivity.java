@@ -743,6 +743,11 @@ public class WordActivity extends AppCompatActivity {
             public void onClick(View v) {
                 setWordStatus(user.getUserid(), currentWord, 1);
                 setWordInfoLayout(currentWord);
+                isReviveAnimating=false;
+                reviveMeanings.setVisibility(View.INVISIBLE);
+                reviveCircle.setVisibility(View.VISIBLE);
+                reviveCircle.setValue(0);
+                reviveCircle.invalidate();
             }
         });
         reviveUnknow= (Button)wordReviveLayout.findViewById(R.id.unknow);
@@ -751,6 +756,11 @@ public class WordActivity extends AppCompatActivity {
             public void onClick(View v) {
                 setWordStatus(user.getUserid(), currentWord, -1);
                 setWordInfoLayout(currentWord);
+                isReviveAnimating=false;
+                reviveMeanings.setVisibility(View.INVISIBLE);
+                reviveCircle.setVisibility(View.VISIBLE);
+                reviveCircle.setValue(0);
+                reviveCircle.invalidate();
             }
         });
         reviveMeanings=(LinearLayout)wordReviveLayout.findViewById(R.id.meanings);
@@ -767,27 +777,26 @@ public class WordActivity extends AppCompatActivity {
         reviveCircle.setMaxValue(100);
         //reviveCircle.setValueAnimated(100, thinkTimes);
         //reviveCircle.setSpinSpeed(1);
-        //reviveCircle.setOnAnimationStateChangedListener(reviveCircleChangeListener);
+        reviveCircle.setOnAnimationStateChangedListener(reviveCircleChangeListener);
     }
 
 
     //*
+    private boolean isReviveAnimating=false;
     private AnimationStateChangedListener reviveCircleChangeListener = new AnimationStateChangedListener() {
-        boolean isBegin=false;
         @Override
         public void onAnimationStateChanged(AnimationState _animationState) {
-            Log.e(TAG, "state:"+_animationState);
+            Log.e(TAG, "state:"+_animationState+", isBegin:"+isReviveAnimating);
             switch (_animationState){
                 case ANIMATING:
-                    isBegin=true;
+                    isReviveAnimating=true;
                     break;
                 case IDLE:
-                    if(isBegin) {
+                    if(isReviveAnimating) {
                         Log.e(TAG, "idle");
                         reviveCircle.setVisibility(View.INVISIBLE);
-                        reviveCircle.setValue(0);
                         reviveMeanings.setVisibility(View.VISIBLE);
-                        reviveCircle.setOnAnimationStateChangedListener(null);
+                        isReviveAnimating=false;
                     }
                     break;
             }
@@ -796,14 +805,9 @@ public class WordActivity extends AppCompatActivity {
     //*/
 
     private void setWordReviveLayout(Word word){
-        setContentView(wordReviveLayout);
         Log.e(TAG, "setWordReviveLayout status:" + word.getStatus());
         reviveStatusRating.setRating(word.getStatus());
-        reviveMeanings.setVisibility(View.INVISIBLE);
-        reviveCircle.setVisibility(View.VISIBLE);
 
-        reviveCircle.setOnAnimationStateChangedListener(reviveCircleChangeListener);
-        reviveCircle.setValue(0);
         reviveCircle.setValueAnimated(0, 100, thinkTimes);
 
         reviveWord.setText(word.getWord());
@@ -837,7 +841,7 @@ public class WordActivity extends AppCompatActivity {
                 reviveMean4.setText(means[3]);
                 break;
         }
-        //setContentView(wordReviveLayout);
+        setContentView(wordReviveLayout);
     }
 
 
