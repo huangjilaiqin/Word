@@ -64,7 +64,6 @@ public class SignAdapter extends BaseRecyclerAdapter<Sign, SignAdapter.MyViewHol
     public void onBindViewHolder(MyViewHolder myHolder, final int position) {
         Sign data = getItem(position);
 
-        Log.e(TAG, ""+data.getTime());
         myHolder.day.setText(TimeHelper.date2Sign(data.getTime()));
         myHolder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override

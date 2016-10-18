@@ -12,7 +12,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -37,6 +36,8 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import at.grabner.circleprogress.AnimationState;
+import at.grabner.circleprogress.AnimationStateChangedListener;
 import at.grabner.circleprogress.CircleProgressView;
 import at.grabner.circleprogress.TextMode;
 import cn.lessask.word.dialog.LoadingDialog;
@@ -170,7 +171,7 @@ public class WordActivity extends AppCompatActivity {
                 Log.e(TAG,"delay end");
             }
         };
-        timer.schedule(task,time);
+        timer.schedule(task, time);
     }
 
     @Override
@@ -621,7 +622,7 @@ public class WordActivity extends AppCompatActivity {
         wordInfoLayout.findViewById(R.id.voice).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                playPhoneFile(currentWord.getWord(),"uk");
+                playPhoneFile(currentWord.getWord(), "uk");
             }
         });
         infoMean1=(TextView)wordInfoLayout.findViewById(R.id.mean1);
@@ -681,7 +682,7 @@ public class WordActivity extends AppCompatActivity {
         learnNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(learnIndex<=learnWords.size())
+                if (learnIndex <= learnWords.size())
                     setWordStatus(user.getUserid(), currentWord, 1);
                 showWord();
             }
@@ -740,18 +741,16 @@ public class WordActivity extends AppCompatActivity {
         reviveKnow.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setWordStatus(user.getUserid(),currentWord,1);
+                setWordStatus(user.getUserid(), currentWord, 1);
                 setWordInfoLayout(currentWord);
-                reviveCircle.setValue(0);
             }
         });
         reviveUnknow= (Button)wordReviveLayout.findViewById(R.id.unknow);
         reviveUnknow.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setWordStatus(user.getUserid(),currentWord,-1);
+                setWordStatus(user.getUserid(), currentWord, -1);
                 setWordInfoLayout(currentWord);
-                reviveCircle.setValue(0);
             }
         });
         reviveMeanings=(LinearLayout)wordReviveLayout.findViewById(R.id.meanings);
@@ -762,28 +761,51 @@ public class WordActivity extends AppCompatActivity {
         reviveMean4=(TextView)wordReviveLayout.findViewById(R.id.mean4);
 
         reviveCircle = (CircleProgressView) wordReviveLayout.findViewById(R.id.timer);
-        reviveCircle.setValue(0);
-        //reviveCircle.setValueAnimated(100, thinkTimes);
-        reviveCircle.setSeekModeEnabled(false);
         reviveCircle.setTextMode(TextMode.TEXT);
+        //设置圈内内容为可改变的文本值
         reviveCircle.setText("");
-        reviveCircle.setSpinSpeed(1);
+        reviveCircle.setMaxValue(100);
+        //reviveCircle.setValueAnimated(100, thinkTimes);
+        //reviveCircle.setSpinSpeed(1);
+        //reviveCircle.setOnAnimationStateChangedListener(reviveCircleChangeListener);
     }
 
 
+    //*
+    private AnimationStateChangedListener reviveCircleChangeListener = new AnimationStateChangedListener() {
+        boolean isBegin=false;
+        @Override
+        public void onAnimationStateChanged(AnimationState _animationState) {
+            Log.e(TAG, "state:"+_animationState);
+            switch (_animationState){
+                case ANIMATING:
+                    isBegin=true;
+                    break;
+                case IDLE:
+                    if(isBegin) {
+                        Log.e(TAG, "idle");
+                        reviveCircle.setVisibility(View.INVISIBLE);
+                        reviveCircle.setValue(0);
+                        reviveMeanings.setVisibility(View.VISIBLE);
+                        reviveCircle.setOnAnimationStateChangedListener(null);
+                    }
+                    break;
+            }
+        }
+    };
+    //*/
 
     private void setWordReviveLayout(Word word){
+        setContentView(wordReviveLayout);
+        Log.e(TAG, "setWordReviveLayout status:" + word.getStatus());
         reviveStatusRating.setRating(word.getStatus());
         reviveMeanings.setVisibility(View.INVISIBLE);
         reviveCircle.setVisibility(View.VISIBLE);
-        new android.os.Handler().postDelayed(
-                new Runnable() {
-                    public void run() {
-                        reviveCircle.setVisibility(View.INVISIBLE);
-                        reviveMeanings.setVisibility(View.VISIBLE);
-                    }
-                }, thinkTimes + 200);
+
+        reviveCircle.setOnAnimationStateChangedListener(reviveCircleChangeListener);
+        reviveCircle.setValue(0);
         reviveCircle.setValueAnimated(0, 100, thinkTimes);
+
         reviveWord.setText(word.getWord());
         reviveUkPhone.setText("/"+word.getUkphone()+"/");
         playPhoneFile(word.getWord(), "uk");
@@ -815,7 +837,7 @@ public class WordActivity extends AppCompatActivity {
                 reviveMean4.setText(means[3]);
                 break;
         }
-        setContentView(wordReviveLayout);
+        //setContentView(wordReviveLayout);
     }
 
 
@@ -975,7 +997,7 @@ public class WordActivity extends AppCompatActivity {
                 builder.append(";");
                 idsBuilder.append(",");
             }
-            if(status==3)
+            if(status==1)
                 newnum++;
             if(status>1)
                 revivenum++;
@@ -1014,7 +1036,7 @@ public class WordActivity extends AppCompatActivity {
             @Override
             public void onError(VolleyError error) {
                 loadingDialog.cancel();
-                Log.e(TAG, "upwordstatus:"+error.toString());
+                Log.e(TAG, "upwordstatus:" + error.toString());
             }
             @Override
             public void setPostData(Map datas) {

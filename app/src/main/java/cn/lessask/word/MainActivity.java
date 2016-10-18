@@ -92,15 +92,29 @@ public class MainActivity extends AppCompatActivity {
                         wordnum=sp.getInt("wordnum",20);
                     }
                     toLearnProgress.setMaxValue(wordnum);
-                    toLearnProgress.setValue(newnum);
+                    //toLearnProgress.setValue(newnum);
+                    toLearnProgress.setValueAnimated(0, newnum, 1000);
                     toLearnProgress.setText(newnum + "/" + wordnum);
+                    /*
+                    toLearnProgress.setOnAnimationStateChangedListener(new AnimationStateChangedListener() {
+                        @Override
+                        public void onAnimationStateChanged(AnimationState _animationState) {
+                            switch (_animationState){
+                                case IDLE:
+                                    toLearnProgress.setOnAnimationStateChangedListener(null);
+                                    break;
+                            }
+                        }
+                    });
+                    //*/
 
                     //获取需要复习的个数
                     User user=globalInfo.getUser();
                     int torevive=queryReviveSized(user.getUserid(),user.getBookid());
                     int total=torevive+revivenum;
                     toReviveProgress.setMaxValue(total);
-                    toReviveProgress.setValue(revivenum);
+                    //toReviveProgress.setValue(revivenum);
+                    toReviveProgress.setValueAnimated(0, revivenum, 1000);
                     toReviveProgress.setText(revivenum+"/"+total);
                     break;
             }
@@ -223,7 +237,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if(globalInfo.getUser().getBookid()>0) {
                     Intent intent = new Intent(MainActivity.this, WordActivity.class);
-                    startActivityForResult(intent,LEARN_WORD);
+                    startActivityForResult(intent, LEARN_WORD);
                 }else{
                     Intent intent = new Intent(MainActivity.this, SelectBookActivity.class);
                     startActivity(intent);
@@ -459,7 +473,7 @@ public class MainActivity extends AppCompatActivity {
                 case LEARN_WORD:
                     User user1=globalInfo.getUser();
                     Log.e(TAG, "learn_word");
-                    loadMainInfo(user1.getUserid(),user1.getToken());
+                    loadMainInfo(user1.getUserid(), user1.getToken());
                     break;
             }
         }
