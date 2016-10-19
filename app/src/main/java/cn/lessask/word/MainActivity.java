@@ -211,6 +211,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        findViewById(R.id.sign_info).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this,SignInfoActivity.class));
+            }
+        });
         mLinearLayoutManager = new LinearLayoutManager(this);
         mLinearLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
         mRecyclerView.setLayoutManager(mLinearLayoutManager);
@@ -299,6 +305,9 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(MainActivity.this, LoginActivity.class);
             startActivityForResult(intent, LOGIN);
         }else{
+
+            loadUserInfo(userid,token);
+            /*
             if(nickname==""||headimg==""||bookid==0){
                 //加载用户信息
                 loadUserInfo(userid,token);
@@ -309,11 +318,16 @@ public class MainActivity extends AppCompatActivity {
                 bindService(serviceIntent, connection, BIND_AUTO_CREATE);
                 atferLoadUser();
             }
+            */
         }
     }
 
-    private void atferLoadUser(){
-        User user=globalInfo.getUser();
+    private void atferLoadUser(User user){
+
+        storageUser(user);
+        globalInfo.setUser(user);
+        loadHeadImg(user.getHeadimg());
+        bindService(serviceIntent, connection, BIND_AUTO_CREATE);
         loadSign();
         loadMainInfo(user.getUserid(),user.getToken());
     }
@@ -384,11 +398,7 @@ public class MainActivity extends AppCompatActivity {
                 }else {
                     //本地存储
                     Log.e(TAG, "bookid test:" + user.getBookid());
-                    storageUser(user);
-                    globalInfo.setUser(user);
-                    loadHeadImg(user.getHeadimg());
-                    bindService(serviceIntent, connection, BIND_AUTO_CREATE);
-                    atferLoadUser();
+                    atferLoadUser(user);
                 }
             }
 
@@ -462,13 +472,7 @@ public class MainActivity extends AppCompatActivity {
                     User user = data.getParcelableExtra("user");
                     Log.e(TAG, "onActivityResult userid:" + user.getUserid() + ", nickname:" + user.getNickname()+", headimg:"+user.getHeadimg());
 
-                    storageUser(user);
-                    //storageUser2Db(user);
-                    globalInfo.setUser(user);
-                    loadHeadImg(user.getHeadimg());
-                    bindService(serviceIntent, connection, BIND_AUTO_CREATE);
-
-                    atferLoadUser();
+                    atferLoadUser(user);
                     break;
                 case LEARN_WORD:
                     User user1=globalInfo.getUser();
@@ -509,6 +513,7 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this, response.getError(), Toast.LENGTH_SHORT).show();
                 }else {
                     List<Sign> signs = response.getDatas();
+                    signs=new ArrayList<>();
                     mRecyclerViewAdapter.appendToList(signs);
                     mRecyclerViewAdapter.notifyDataSetChanged();
                 }
