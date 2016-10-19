@@ -5,17 +5,27 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:CircleProgressView="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@color/background_grey"
     tools:context="cn.lessask.word.PersionalActivity">
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        app:navigationIcon="?attr/homeAsUpIndicator"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+        android:background="@color/colorPrimary"
+        />
 
     <LinearLayout
         android:id="@+id/persional_info"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_below="@id/toolbar"
         android:orientation="vertical"
-        android:layout_marginTop="36dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="16dp"
         android:background="@color/background_white"
         >
         <de.hdodenhof.circleimageview.CircleImageView
@@ -50,8 +60,8 @@
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingBottom="8dp"
-            android:paddingTop="8dp"
+            android:paddingBottom="12dp"
+            android:paddingTop="12dp"
             >
             <TextView
                 android:id="@+id/bookname"
@@ -100,6 +110,49 @@
             android:background="@color/grey"
             />
     </LinearLayout>
+    <LinearLayout
+        android:id="@+id/purch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:orientation="vertical"
+        android:background="@color/background_white"
+        android:layout_below="@id/change_book"
+        >
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="12dp"
+            android:paddingTop="12dp"
+            >
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="16dp"
+                android:textSize="18dp"
+                android:text="零钱"
+                />
+            <TextView
+                android:id="@+id/purch_amount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:layout_marginRight="16dp"
+                android:textSize="22dp"
+                android:text="0.00"
+                />
+        </RelativeLayout>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:background="@color/grey"
+            />
+    </LinearLayout>
+
+    <!--
     <LinearLayout
         android:id="@+id/purch"
         android:layout_width="match_parent"
@@ -179,6 +232,7 @@
             android:background="@color/grey"
             />
     </LinearLayout>
+    -->
 
 
 </RelativeLayout>

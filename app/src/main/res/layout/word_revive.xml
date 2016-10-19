@@ -135,6 +135,42 @@
         android:layout_alignParentBottom="true"
         android:layout_marginBottom="16dp"
         >
+        <ImageView
+            android:id="@+id/voice"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:padding="12dp"
+            android:layout_centerHorizontal="true"
+            android:background="@drawable/voice"
+            />
+        <LinearLayout
+            android:layout_below="@id/voice"
+            android:layout_marginTop="16dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            >
+            <Button
+                android:id="@+id/know"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="-0.5dp"
+                android:background="@drawable/btn_left"
+                android:text="认识"
+                />
+            <Button
+                android:id="@+id/unknow"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="-0.5dp"
+                android:background="@drawable/btn_right"
+                android:text="不认识"
+                />
+
+        </LinearLayout>
+        <!--
         <View
             android:id="@+id/nothing"
             android:layout_width="0dp"
@@ -161,6 +197,7 @@
             android:background="@drawable/btn_right"
             android:text="不认识"
             />
+            -->
     </RelativeLayout>
 
 </RelativeLayout>

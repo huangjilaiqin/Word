@@ -18,6 +18,16 @@
         android:layout_alignParentLeft="true"
         android:src="@mipmap/ic_launcher"
         />
+    <ImageView
+        android:id="@+id/info"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:src="@drawable/ic_info"
+        />
 
     <RelativeLayout
         android:id="@+id/sign"
@@ -123,93 +133,120 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
+        android:orientation="horizontal"
+        android:layout_marginRight="16dp"
+        android:layout_marginLeft="16dp"
         >
-        <RelativeLayout
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_weight="1"
-            android:layout_height="wrap_content">
-            <LinearLayout
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            >
+            <at.grabner.circleprogress.CircleProgressView
+                android:id="@+id/tolearn"
+                android:layout_marginTop="8dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_width="78dp"
+                android:layout_height="78dp"
+                CircleProgressView:cpv_barWidth="8dp"
+                CircleProgressView:cpv_rimWidth="8dp"
+                CircleProgressView:cpv_value="0"
+                CircleProgressView:cpv_maxValue="100"
+                CircleProgressView:cpv_barColor="@color/red"
+                CircleProgressView:cpv_rimColor="@color/grey"
+                CircleProgressView:cpv_textColor="#998877"
+                CircleProgressView:cpv_unitColor="#187854"
+                CircleProgressView:cpv_spinColor="#883366"
+
+                CircleProgressView:cpv_contourSize="0dp"
+                CircleProgressView:cpv_autoTextSize="true"
+                CircleProgressView:cpv_seekMode="false"
+                CircleProgressView:cpv_textScale="1"
+                CircleProgressView:cpv_showUnit="false"
+                />
+            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_alignParentRight="true"
-                android:layout_marginRight="8dp"
-                >
-                <at.grabner.circleprogress.CircleProgressView
-                    android:id="@+id/tolearn"
-                    android:layout_marginTop="8dp"
-                    android:layout_centerHorizontal="true"
-                    android:layout_width="78dp"
-                    android:layout_height="78dp"
-                    CircleProgressView:cpv_barWidth="8dp"
-                    CircleProgressView:cpv_rimWidth="8dp"
-                    CircleProgressView:cpv_value="0"
-                    CircleProgressView:cpv_maxValue="100"
-                    CircleProgressView:cpv_barColor="@color/red"
-                    CircleProgressView:cpv_rimColor="@color/grey"
-                    CircleProgressView:cpv_textColor="#998877"
-                    CircleProgressView:cpv_unitColor="#187854"
-                    CircleProgressView:cpv_spinColor="#883366"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="6dp"
+                android:text="新单词"
+                />
+        </LinearLayout>
 
-                    CircleProgressView:cpv_contourSize="0dp"
-                    CircleProgressView:cpv_autoTextSize="true"
-                    CircleProgressView:cpv_seekMode="false"
-                    CircleProgressView:cpv_textScale="1"
-                    CircleProgressView:cpv_showUnit="false"
-                    />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginTop="6dp"
-                    android:text="新单词"
-                    />
-            </LinearLayout>
-
-        </RelativeLayout>
-
-        <RelativeLayout
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_weight="1"
-            android:layout_height="wrap_content">
-            <LinearLayout
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginLeft="8dp"
+            >
+            <at.grabner.circleprogress.CircleProgressView
+                android:id="@+id/torevive"
+                android:layout_marginTop="8dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_width="78dp"
+                android:layout_height="78dp"
+                CircleProgressView:cpv_barWidth="8dp"
+                CircleProgressView:cpv_rimWidth="8dp"
+                CircleProgressView:cpv_value="0"
+                CircleProgressView:cpv_maxValue="100"
+                CircleProgressView:cpv_barColor="@color/red"
+                CircleProgressView:cpv_rimColor="@color/grey"
+                CircleProgressView:cpv_textColor="#998877"
+                CircleProgressView:cpv_unitColor="#187854"
+                CircleProgressView:cpv_spinColor="#883366"
+
+                CircleProgressView:cpv_contourSize="0dp"
+                CircleProgressView:cpv_autoTextSize="true"
+                CircleProgressView:cpv_seekMode="false"
+                CircleProgressView:cpv_textScale="1"
+                CircleProgressView:cpv_showUnit="false"
+                />
+            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_alignParentLeft="true"
-                android:layout_marginLeft="8dp"
-                >
-                <at.grabner.circleprogress.CircleProgressView
-                    android:id="@+id/torevive"
-                    android:layout_marginTop="8dp"
-                    android:layout_centerHorizontal="true"
-                    android:layout_width="78dp"
-                    android:layout_height="78dp"
-                    CircleProgressView:cpv_barWidth="8dp"
-                    CircleProgressView:cpv_rimWidth="8dp"
-                    CircleProgressView:cpv_value="0"
-                    CircleProgressView:cpv_maxValue="100"
-                    CircleProgressView:cpv_barColor="@color/red"
-                    CircleProgressView:cpv_rimColor="@color/grey"
-                    CircleProgressView:cpv_textColor="#998877"
-                    CircleProgressView:cpv_unitColor="#187854"
-                    CircleProgressView:cpv_spinColor="#883366"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="6dp"
+                android:text="复习单词"
+                />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            >
+            <at.grabner.circleprogress.CircleProgressView
+                android:id="@+id/deposit"
+                android:layout_marginTop="8dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_width="78dp"
+                android:layout_height="78dp"
+                CircleProgressView:cpv_barWidth="8dp"
+                CircleProgressView:cpv_rimWidth="8dp"
+                CircleProgressView:cpv_value="0"
+                CircleProgressView:cpv_maxValue="100"
+                CircleProgressView:cpv_barColor="@color/red"
+                CircleProgressView:cpv_rimColor="@color/grey"
+                CircleProgressView:cpv_textColor="#998877"
+                CircleProgressView:cpv_unitColor="#187854"
+                CircleProgressView:cpv_spinColor="#883366"
 
-                    CircleProgressView:cpv_contourSize="0dp"
-                    CircleProgressView:cpv_autoTextSize="true"
-                    CircleProgressView:cpv_seekMode="false"
-                    CircleProgressView:cpv_textScale="1"
-                    CircleProgressView:cpv_showUnit="false"
-                    />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginTop="6dp"
-                    android:text="复习单词"
-                    />
-            </LinearLayout>
-        </RelativeLayout>
+                CircleProgressView:cpv_contourSize="0dp"
+                CircleProgressView:cpv_autoTextSize="true"
+                CircleProgressView:cpv_seekMode="false"
+                CircleProgressView:cpv_textScale="1"
+                CircleProgressView:cpv_showUnit="false"
+                />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="6dp"
+                android:text="契约金"
+                />
+        </LinearLayout>
     </LinearLayout>
 
     <RelativeLayout

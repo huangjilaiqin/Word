@@ -11,6 +11,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -23,6 +24,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -112,6 +114,18 @@ public class PersionalActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_persional);
+
+        Toolbar mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        mToolbar.setTitle("我的");
+        mToolbar.setTitleTextColor(getResources().getColor(R.color.background_white));
+        setSupportActionBar(mToolbar);
+        mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBack();
+            }
+        });
+
         serviceIntent = new Intent(this, ServiceCrack.class);
         sp = PersionalActivity.this.getSharedPreferences("SP", MODE_PRIVATE);
 
@@ -126,6 +140,11 @@ public class PersionalActivity extends AppCompatActivity {
                 startActivityForResult(intent, CHANGE_BOOK);
             }
         });
+
+        TextView purchAmount=(TextView) findViewById(R.id.purch_amount);
+        DecimalFormat decimalFormat=new DecimalFormat(".00");
+        purchAmount.setText(decimalFormat.format(user.getMoney()));
+        /*
         findViewById(R.id.purch).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -140,6 +159,7 @@ public class PersionalActivity extends AppCompatActivity {
                 startActivityForResult(intent, CONTRACT);
             }
         });
+        */
         loadHeadImg(user.getHeadimg());
 
         download=(Button)findViewById(R.id.download);
@@ -177,6 +197,15 @@ public class PersionalActivity extends AppCompatActivity {
 
         bindService();
 
+    }
+
+    private void onBack(){
+        finish();
+    }
+
+    @Override
+    public void onBackPressed() {
+        onBack();
     }
 
     private void queryBookInfo(final int userid,final String token,final int bookid){
@@ -326,11 +355,6 @@ public class PersionalActivity extends AppCompatActivity {
 
         if(timer!=null)
             timer.cancel();
-    }
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
     }
 
     @Override

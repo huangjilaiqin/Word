@@ -243,10 +243,15 @@ public class TimeHelper {
 
             if (nowYear == dateYear && nowMonth==dateMonth && nowDay==dateDay) {
                 buffer.append("今天");
-            }else if(date.getTime()>=startTime.getTime().getTime() && date.getTime()<=endTime.getTime().getTime()){
-                buffer.append(weakName[dateWeek]);
-            }else{
-                buffer.append(dateMonth+"/"+dateDay);
+            }else {
+                long nTime=date.getTime()/1000;
+                long sTime=startTime.getTime().getTime()/1000;
+                long eTime=endTime.getTime().getTime()/1000;
+                if (nTime>=sTime && nTime<=eTime) {
+                    buffer.append(weakName[dateWeek]);
+                } else {
+                    buffer.append(dateMonth + "/" + dateDay);
+                }
             }
         }
         return buffer.toString();

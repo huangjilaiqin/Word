@@ -110,6 +110,54 @@ public class User extends Response{
          }
     };
 
+    public int getSignid() {
+        return signid;
+    }
+
+    public void setSignid(int signid) {
+        this.signid = signid;
+    }
+
+    public int getWordnum() {
+        return wordnum;
+    }
+
+    public void setWordnum(int wordnum) {
+        this.wordnum = wordnum;
+    }
+
+    public float getMoney() {
+        return money;
+    }
+
+    public void setMoney(float money) {
+        this.money = money;
+    }
+
+    public float getDeposit() {
+        return deposit;
+    }
+
+    public void setDeposit(float deposit) {
+        this.deposit = deposit;
+    }
+
+    public float getGetback() {
+        return getback;
+    }
+
+    public void setGetback(float getback) {
+        this.getback = getback;
+    }
+
+    public int getReachnum() {
+        return reachnum;
+    }
+
+    public void setReachnum(int reachnum) {
+        this.reachnum = reachnum;
+    }
+
     public int getBookid() {
         return bookid;
     }

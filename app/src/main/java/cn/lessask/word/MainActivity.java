@@ -72,6 +72,7 @@ public class MainActivity extends AppCompatActivity {
 
     private CircleProgressView toLearnProgress;
     private CircleProgressView toReviveProgress;
+    private CircleProgressView depositProgress;
 
     private final int GET_MININFO=1;
     private Handler handler = new Handler(){
@@ -113,9 +114,12 @@ public class MainActivity extends AppCompatActivity {
                     int torevive=queryReviveSized(user.getUserid(),user.getBookid());
                     int total=torevive+revivenum;
                     toReviveProgress.setMaxValue(total);
-                    //toReviveProgress.setValue(revivenum);
                     toReviveProgress.setValueAnimated(0, revivenum, 1000);
                     toReviveProgress.setText(revivenum+"/"+total);
+
+                    depositProgress.setMaxValue(user.getDeposit());
+                    depositProgress.setValueAnimated(0, user.getGetback(), 1000);
+                    depositProgress.setText(user.getGetback()+"/"+user.getDeposit());
                     break;
             }
         }
@@ -217,6 +221,14 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(MainActivity.this,SignInfoActivity.class));
             }
         });
+
+        findViewById(R.id.info).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this,SignInfoActivity.class));
+            }
+        });
+
         mLinearLayoutManager = new LinearLayoutManager(this);
         mLinearLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
         mRecyclerView.setLayoutManager(mLinearLayoutManager);
@@ -230,6 +242,8 @@ public class MainActivity extends AppCompatActivity {
         toLearnProgress.setTextMode(TextMode.TEXT);
         toReviveProgress=(CircleProgressView)findViewById(R.id.torevive);
         toReviveProgress.setTextMode(TextMode.TEXT);
+        depositProgress=(CircleProgressView)findViewById(R.id.deposit);
+        depositProgress.setTextMode(TextMode.TEXT);
 
         findViewById(R.id.start).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -513,7 +527,6 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this, response.getError(), Toast.LENGTH_SHORT).show();
                 }else {
                     List<Sign> signs = response.getDatas();
-                    signs=new ArrayList<>();
                     mRecyclerViewAdapter.appendToList(signs);
                     mRecyclerViewAdapter.notifyDataSetChanged();
                 }

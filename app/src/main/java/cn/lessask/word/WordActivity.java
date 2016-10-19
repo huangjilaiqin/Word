@@ -395,11 +395,23 @@ public class WordActivity extends AppCompatActivity {
                     recognizeSiriView.stop();
                 else {
                     recognizeSiriView.start();
-                    playPhoneFile(currentWord.getWord(),"uk");
+                    playPhoneFile(currentWord.getWord(), "uk", new PlayMp3Event() {
+                        @Override
+                        public void onComplete() {
+                            recognizeSiriView.stop();
+                        }
+                    });
                 }
             }
+
         });
         recognizeUkphone=(TextView)wordRecognize.findViewById(R.id.ukphone);
+        wordRecognize.findViewById(R.id.voice).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                playPhoneFile(currentWord.getWord(), "uk",null);
+            }
+        });
         answera = (TextView)wordRecognize.findViewById(R.id.answera);
         answerb = (TextView)wordRecognize.findViewById(R.id.answerb);
         answerc = (TextView)wordRecognize.findViewById(R.id.answerc);
@@ -434,43 +446,73 @@ public class WordActivity extends AppCompatActivity {
         @Override
         public void onClick(View v) {
             TextView answerItem=null;
+            TextView selectItem=null;
             boolean isRight=false;
             if(v==answeraItem){
-                answerItem=answera;
+                selectItem=answera;
                 if(recognizeAnswer==0)
                     isRight=true;
             }else if(v==answerbItem){
-                answerItem=answerb;
+                selectItem=answerb;
                 if(recognizeAnswer==1)
                     isRight=true;
             }else if(v==answercItem){
-                answerItem=answerc;
+                selectItem=answerc;
                 if(recognizeAnswer==2)
                     isRight=true;
             }else if(v==answerdItem){
-                answerItem=answerd;
+                selectItem=answerd;
                 if(recognizeAnswer==3)
                     isRight=true;
             }
+            if(recognizeAnswer==0)
+                answerItem=answera;
+            else if(recognizeAnswer==1)
+                answerItem=answerb;
+            else if(recognizeAnswer==2)
+                answerItem=answerc;
+            else
+                answerItem=answerd;
+
+            int type=currentWord.getRecognizeType();
             if(isRight){
                 answerItem.setTextColor(getResources().getColor(R.color.hublue));
                 setWordStatus(user.getUserid(),currentWord,1);
 
                 //音选中文
-                if(currentWord.getRecognizeType()==3) {
+                if(type==3) {
                     answerItem.setText(currentWord.getWord());
                     answerItem.setTextSize(TypedValue.COMPLEX_UNIT_PX,getResources().getDimension(R.dimen.word_recognize_mean_en_size));
                     delay(1000,1);
+                }else if(type==2) {
+                    //中选英
+                    playPhoneFile(currentWord.getWord(),"uk",new PlayMp3Event(){
+                        @Override
+                        public void onComplete() {
+                            showWord();
+                        }
+                    });
                 }else {
-                    Log.e(TAG, "showWord");
                     delay(500,1);
                 }
             }else{
                 //错了
-                answerItem.setTextColor(getResources().getColor(R.color.red));
+                selectItem.setTextColor(getResources().getColor(R.color.red));
+                answerItem.setTextColor(getResources().getColor(R.color.hublue));
                 setWordStatus(user.getUserid(),currentWord,-1);
-                delay(500,2);
+                if(type==2){
+                    //中选英
+                    playPhoneFile(currentWord.getWord(),"uk",new PlayMp3Event(){
+                        @Override
+                        public void onComplete() {
+                            setWordInfoLayout(currentWord);
+                        }
+                    });
+                }else{
+                    delay(500,2);
+                }
             }
+
         }
     };
 
@@ -500,7 +542,7 @@ public class WordActivity extends AppCompatActivity {
                     answerItem.setText(errorAnswers.get(errorI++));
                 }
             }
-            playPhoneFile(word.getWord(),"uk");
+            playPhoneFile(word.getWord(), "uk", null);
         }else if(type==2){
             //中->英
             recognizeType1.setVisibility(View.INVISIBLE);
@@ -548,7 +590,12 @@ public class WordActivity extends AppCompatActivity {
                 }
             }
             recognizeSiriView.start();
-            playPhoneFile(word.getWord(),"uk");
+            playPhoneFile(word.getWord(), "uk", new PlayMp3Event() {
+                @Override
+                public void onComplete() {
+                    recognizeSiriView.stop();
+                }
+            });
         }
         setContentView(wordRecognize);
     }
@@ -622,7 +669,7 @@ public class WordActivity extends AppCompatActivity {
         wordInfoLayout.findViewById(R.id.voice).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                playPhoneFile(currentWord.getWord(), "uk");
+                playPhoneFile(currentWord.getWord(), "uk",null);
             }
         });
         infoMean1=(TextView)wordInfoLayout.findViewById(R.id.mean1);
@@ -672,7 +719,7 @@ public class WordActivity extends AppCompatActivity {
                 infoMean4.setText(means[3]);
                 break;
         }
-        playPhoneFile(word.getWord(),"uk");
+        playPhoneFile(word.getWord(),"uk",null);
         setContentView(wordInfoLayout);
     }
 
@@ -685,6 +732,12 @@ public class WordActivity extends AppCompatActivity {
                 if (learnIndex <= learnWords.size())
                     setWordStatus(user.getUserid(), currentWord, 1);
                 showWord();
+            }
+        });
+        wordLearn.findViewById(R.id.voice).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                playPhoneFile(currentWord.getWord(), "uk",null);
             }
         });
         learnUkphone = (TextView)wordLearn.findViewById(R.id.ukphone);
@@ -729,7 +782,7 @@ public class WordActivity extends AppCompatActivity {
                 learnMean4.setText(means[3]);
                 break;
         }
-        playPhoneFile(word.getWord(),"uk");
+        playPhoneFile(word.getWord(),"uk",null);
         setContentView(wordLearn);
     }
 
@@ -738,6 +791,12 @@ public class WordActivity extends AppCompatActivity {
         reviveStatusRating=(RatingBar)wordReviveLayout.findViewById(R.id.status);
         reviveWord=(TextView)wordReviveLayout.findViewById(R.id.word);
         reviveKnow = (Button)wordReviveLayout.findViewById(R.id.know);
+        wordReviveLayout.findViewById(R.id.voice).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                playPhoneFile(currentWord.getWord(), "uk",null);
+            }
+        });
         reviveKnow.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -812,7 +871,7 @@ public class WordActivity extends AppCompatActivity {
 
         reviveWord.setText(word.getWord());
         reviveUkPhone.setText("/"+word.getUkphone()+"/");
-        playPhoneFile(word.getWord(), "uk");
+        playPhoneFile(word.getWord(), "uk",null);
         String[] means = word.getMean().split("#");
         int size = means.length;
         switch (size){
@@ -924,13 +983,13 @@ public class WordActivity extends AppCompatActivity {
     }
 
     //type: 1英式发音，2美式发音
-    private void playPhoneFile(String word,String type){
+    private void playPhoneFile(String word,String type,final PlayMp3Event event){
         String url = "http://120.24.75.92:5006/word/downloadphone?word="+word+"&type="+type;
         String filename=word+"_"+type+".mp3";
         File phoneFile = new File(Constant.phonePrefixPath,filename);
         if(phoneFile.exists()){
             Log.e(TAG, "playPhoneFile local:"+phoneFile.getPath() );
-            playMp3(phoneFile.getPath());
+            playMp3(phoneFile.getPath(),event);
         }else {
             final String path = phoneFile.getPath();
             NetworkFileHelper.getInstance().startGetFile(url, path, new NetworkFileHelper.GetFileRequest() {
@@ -947,7 +1006,7 @@ public class WordActivity extends AppCompatActivity {
                     } else {
                         Log.e(TAG, "not exists:" + path);
                     }
-                    playMp3(path);
+                    playMp3(path,event);
                 }
 
                 @Override
@@ -958,7 +1017,7 @@ public class WordActivity extends AppCompatActivity {
             });
         }
     }
-    private void playMp3(String path){
+    private void playMp3(String path, final PlayMp3Event event){
 
         MediaPlayer mp = new MediaPlayer();
         try {
@@ -969,8 +1028,10 @@ public class WordActivity extends AppCompatActivity {
                 @Override
                 public void onCompletion(MediaPlayer mp) {
                     mp.release();
-                    if(currentWord.getStatus()==4)
-                        recognizeSiriView.stop();
+                    //if(currentWord.getStatus()==4)
+                    //    recognizeSiriView.stop();
+                    if(event!=null)
+                        event.onComplete();
                 }
             });
         }catch (IOException e){
@@ -1051,6 +1112,10 @@ public class WordActivity extends AppCompatActivity {
             }
         });
         VolleyHelper.getInstance().addToRequestQueue(gsonRequest);
+    }
+
+    interface PlayMp3Event{
+        void onComplete();
     }
 }
 

@@ -113,9 +113,17 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
         >
-
+        <ImageView
+            android:id="@+id/voice"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:padding="12dp"
+            android:layout_centerHorizontal="true"
+            android:background="@drawable/voice"
+            />
         <Button
             android:id="@+id/next"
+            android:layout_below="@id/voice"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
