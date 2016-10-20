@@ -31,6 +31,7 @@ import java.util.TimerTask;
 
 import cn.lessask.word.model.ArrayListResponse;
 import cn.lessask.word.model.Book;
+import cn.lessask.word.model.Response;
 import cn.lessask.word.model.Word;
 import cn.lessask.word.model.WordList;
 import cn.lessask.word.model.WordStatus;
@@ -531,6 +532,100 @@ public class ServiceCrack extends Service implements ServiceInterFace{
         VolleyHelper.getInstance().addToRequestQueue(gsonRequest);
     }
 
+
+    public void storageBook(String wordsStr){
+        if(wordsStr==null){
+            Log.e(TAG, "storageBook error: wordsStr is null");
+            return;
+        }
+        if(wordsStr.length()>0) {
+            final String[] words = wordsStr.split(";");
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    SQLiteDatabase db=globalInfo.getDb(getApplicationContext());
+                    for (int i = 0, size = words.length; i < size; i++) {
+                        String[] info = words[i].split(":");
+                        ContentValues values = new ContentValues();
+                        values.put("id", info[0]);
+                        values.put("word", info[1]);
+                        values.put("userid", userid);
+                        values.put("bookid", bookid);
+                        db.insert("t_words", null, values);
+                    }
+                    Log.e(TAG, "insert done");
+                }
+            }).start();
+        }
+    }
+
+    public void syncWords(final int userid,final String token,final int bookid){
+        final  SQLiteDatabase db = globalInfo.getDb(getBaseContext());
+        String sql = "select id,status,review from t_words where userid=? and bookid=? and sync=0";
+        Cursor cursor = db.rawQuery(sql, new String[]{"" + userid, "" + bookid});
+        StringBuilder builder = new StringBuilder();
+        StringBuilder idsBuilder = new StringBuilder();
+        int count = cursor.getCount();
+        if(count==0)
+            return;
+        int status=0,newnum=0,revivenum=0;
+        for(int i=0;i<count;i++){
+            cursor.moveToNext();
+            int id = cursor.getInt(0);
+            builder.append(id);
+            idsBuilder.append(id);
+            builder.append(",");
+            status=cursor.getInt(1);
+            builder.append(status);
+            builder.append(",");
+            builder.append(cursor.getInt(2));
+            if(i+1<count){
+                builder.append(";");
+                idsBuilder.append(",");
+            }
+            if(status==1)
+                newnum++;
+            if(status>1)
+                revivenum++;
+        }
+        Log.e(TAG, "syncWords newnum:"+newnum+", revivenum:"+revivenum);
+        editor.putInt("newnum",sp.getInt("newnum",0)+newnum);
+        editor.putInt("revivenum",sp.getInt("revivenum",0)+revivenum);
+        editor.commit();
+
+        final String syncDatas=builder.toString();
+        final String syncIds=idsBuilder.toString();
+        Log.e(TAG, "sync:"+syncDatas);
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/upwordstatus", Response.class, new GsonRequest.PostGsonRequest<Response>() {
+            @Override
+            public void onStart() {
+            }
+            @Override
+            public void onResponse(Response resp) {
+                if(resp.getError()!=null && resp.getError()!="" || resp.getErrno()!=0){
+                    Log.e(TAG, "syncWords "+resp.getError());
+                }else{
+                    String updateSql = "update t_words set sync=1 where userid=? and bookid=? and id in ("+syncIds+")";
+                    Cursor cursor=db.rawQuery(updateSql, new String[]{""+userid,""+bookid});
+                    Log.e(TAG, "sync ok:"+cursor.getCount()+", "+syncIds);
+                }
+            }
+
+            @Override
+            public void onError(VolleyError error) {
+                Log.e(TAG, "upwordstatus:" + error.toString());
+            }
+            @Override
+            public void setPostData(Map datas) {
+                datas.put("userid", ""+userid);
+                datas.put("token", token);
+                datas.put("bookid",""+bookid);
+                datas.put("datas",syncDatas);
+            }
+        });
+        VolleyHelper.getInstance().addToRequestQueue(gsonRequest);
+    }
+
     class ServiceBider extends Binder implements ServiceInterFace{
         @Override
         public float getOfflineRate(int userid, int bookid) {
@@ -560,6 +655,16 @@ public class ServiceCrack extends Service implements ServiceInterFace{
         @Override
         public void checkSyncBook(int userid, String token, int bookid) {
             ServiceCrack.this.checkSyncBook(userid,token,bookid);
+        }
+
+        @Override
+        public void storageBook(String wordsStr) {
+            ServiceCrack.this.storageBook(wordsStr);
+        }
+
+        @Override
+        public void syncWords(int userid, String token, int bookid) {
+            ServiceCrack.this.syncWords(userid,token,bookid);
         }
     }
 }

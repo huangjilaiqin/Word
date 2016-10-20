@@ -10,11 +10,19 @@ public class MainInfo extends Response{
     private int newnum;
     private int revivenum;
     private int wordnum;
+    private int isComplete;
 
     public MainInfo(int newnum, int revivenum,int wordnum) {
         this.newnum = newnum;
         this.revivenum = revivenum;
         this.wordnum=wordnum;
+    }
+
+    public MainInfo(int newnum, int revivenum,int wordnum,int isComplete) {
+        this.newnum = newnum;
+        this.revivenum = revivenum;
+        this.wordnum=wordnum;
+        this.isComplete=isComplete;
     }
 
     public MainInfo(int errno, String error, int newnum, int revivenum,int wordnum) {
@@ -29,6 +37,7 @@ public class MainInfo extends Response{
         dest.writeInt(newnum);
         dest.writeInt(revivenum);
         dest.writeInt(wordnum);
+        dest.writeInt(isComplete);
     }
 
     public static final Parcelable.Creator<MainInfo> CREATOR
@@ -37,13 +46,22 @@ public class MainInfo extends Response{
              int newnum = in.readInt();
              int revivenum = in.readInt();
              int wordnum = in.readInt();
-             return new MainInfo(newnum,revivenum,wordnum);
+             int isComplete = in.readInt();
+             return new MainInfo(newnum,revivenum,wordnum,isComplete);
          }
 
          public MainInfo[] newArray(int size) {
              return new MainInfo[size];
          }
     };
+
+    public int getIsComplete() {
+        return isComplete;
+    }
+
+    public void setIsComplete(int isComplete) {
+        this.isComplete = isComplete;
+    }
 
     public int getWordnum() {
         return wordnum;

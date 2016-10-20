@@ -74,6 +74,9 @@ public class MainActivity extends AppCompatActivity {
     private CircleProgressView toReviveProgress;
     private CircleProgressView depositProgress;
 
+    SharedPreferences sp;
+    SharedPreferences.Editor editor;
+
     private final int GET_MININFO=1;
     private Handler handler = new Handler(){
         @Override
@@ -206,6 +209,9 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
+        sp = MainActivity.this.getSharedPreferences("SP", MODE_PRIVATE);
+        editor=sp.edit();
+
         mRecyclerView = (RecyclerViewStatusSupport)findViewById(R.id.list);
         mRecyclerView.setStatusViews(findViewById(R.id.loading_view), findViewById(R.id.empty_view), findViewById(R.id.error_view));
         findViewById(R.id.refresh).setOnClickListener(new View.OnClickListener() {
@@ -225,7 +231,7 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.info).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(MainActivity.this,SignInfoActivity.class));
+                startActivity(new Intent(MainActivity.this, SignInfoActivity.class));
             }
         });
 
@@ -319,7 +325,6 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(MainActivity.this, LoginActivity.class);
             startActivityForResult(intent, LOGIN);
         }else{
-
             loadUserInfo(userid,token);
             /*
             if(nickname==""||headimg==""||bookid==0){
@@ -491,7 +496,8 @@ public class MainActivity extends AppCompatActivity {
                 case LEARN_WORD:
                     User user1=globalInfo.getUser();
                     Log.e(TAG, "learn_word");
-                    loadMainInfo(user1.getUserid(), user1.getToken());
+                    if(sp.getInt("isComplete",0)==1)
+                        loadUserInfo(user1.getUserid(), user1.getToken());
                     break;
             }
         }

@@ -1,12 +1,15 @@
 package cn.lessask.word;
 
+import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -42,6 +45,7 @@ import at.grabner.circleprogress.CircleProgressView;
 import at.grabner.circleprogress.TextMode;
 import cn.lessask.word.dialog.LoadingDialog;
 import cn.lessask.word.model.ArrayListResponse;
+import cn.lessask.word.model.MainInfo;
 import cn.lessask.word.model.Response;
 import cn.lessask.word.model.User;
 import cn.lessask.word.model.Word;
@@ -53,6 +57,9 @@ import cn.lessask.word.util.GlobalInfo;
 public class WordActivity extends AppCompatActivity {
     private String TAG = WordActivity.class.getSimpleName();
     private GlobalInfo globalInfo = GlobalInfo.getInstance();
+
+    private ServiceInterFace serviceInterFace;
+    private Intent serviceIntent;
 
     View wordLearn,wordReviveLayout,wordRecognize,wordInfoLayout,wordGroupLayout ;
     SharedPreferences sp;
@@ -100,6 +107,8 @@ public class WordActivity extends AppCompatActivity {
     private User user;
     private Word currentWord;
 
+    private final int SYNC_FINISH=3;
+
     private Handler handler = new Handler(){
         @Override
         public void handleMessage(Message msg) {
@@ -112,6 +121,9 @@ public class WordActivity extends AppCompatActivity {
                 case 2:
                     setWordInfoLayout(currentWord);
                     break;
+                case SYNC_FINISH:
+                    realBack();
+                    break;
             }
         }
     };
@@ -123,6 +135,7 @@ public class WordActivity extends AppCompatActivity {
         LayoutInflater inflater = LayoutInflater.from(this);
         sp = this.getSharedPreferences("SP", MODE_PRIVATE);
         editor = sp.edit();
+        serviceIntent = new Intent(this, ServiceCrack.class);
 
         //以上两行功能一样
         wordLearn = inflater.inflate(R.layout.word_learn,null);
@@ -142,6 +155,22 @@ public class WordActivity extends AppCompatActivity {
 
         user = globalInfo.getUser();
         gotoLean();
+        bindService();
+    }
+
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            serviceInterFace=(ServiceInterFace)service;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+
+        }
+    };
+    private void bindService(){
+        bindService(serviceIntent, serviceConnection, BIND_AUTO_CREATE);
     }
 
     private void gotoLean(){
@@ -179,10 +208,24 @@ public class WordActivity extends AppCompatActivity {
         onBack();
     }
 
-    private void onBack(){
-        syncWords(user.getUserid(),user.getBookid());
+    private void realBack(){
+        Log.e(TAG, "realBack");
         WordActivity.this.setResult(RESULT_OK,getIntent());
         finish();
+    }
+
+    private void onBack(){
+        /*
+        if (serviceInterFace != null) {
+            Log.e(TAG, "onBack service");
+            serviceInterFace.syncWords(user.getUserid(),user.getToken(),user.getBookid());
+        }else {
+            Log.e(TAG, "onBack not service");
+        }
+        */
+        syncWords(user.getUserid(), user.getBookid());
+        //WordActivity.this.setResult(RESULT_OK,getIntent());
+        //finish();
     }
 
     private void showWord(){
@@ -221,7 +264,7 @@ public class WordActivity extends AppCompatActivity {
             setWordGroupLayout(learnWords);
             learnIndex=0;
             //return false;
-            syncWords(user.getUserid(),user.getBookid());
+            //syncWords(user.getUserid(),user.getBookid());
         }
     }
 
@@ -391,7 +434,7 @@ public class WordActivity extends AppCompatActivity {
         recognizeSiriView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(recognizeSiriView.isActive())
+                if (recognizeSiriView.isActive())
                     recognizeSiriView.stop();
                 else {
                     recognizeSiriView.start();
@@ -499,7 +542,7 @@ public class WordActivity extends AppCompatActivity {
                 //错了
                 selectItem.setTextColor(getResources().getColor(R.color.red));
                 answerItem.setTextColor(getResources().getColor(R.color.hublue));
-                setWordStatus(user.getUserid(),currentWord,-1);
+                setWordStatus(user.getUserid(), currentWord, -1);
                 if(type==2){
                     //中选英
                     playPhoneFile(currentWord.getWord(),"uk",new PlayMp3Event(){
@@ -737,7 +780,7 @@ public class WordActivity extends AppCompatActivity {
         wordLearn.findViewById(R.id.voice).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                playPhoneFile(currentWord.getWord(), "uk",null);
+                playPhoneFile(currentWord.getWord(), "uk", null);
             }
         });
         learnUkphone = (TextView)wordLearn.findViewById(R.id.ukphone);
@@ -968,13 +1011,13 @@ public class WordActivity extends AppCompatActivity {
         Date review = new Date(now.getTime());
 
         ContentValues values = new ContentValues();
-        values.put("status",status);
-        values.put("sync",0);
-        values.put("review",review.getTime()/1000);
+        values.put("status", status);
+        values.put("sync", 0);
+        values.put("review", review.getTime() / 1000);
         String where = "userid=? and id=?";
         String[] whereArgs = new String[]{""+userid,""+word.getId()};
-        globalInfo.getDb(WordActivity.this).update("t_words",values,where,whereArgs);
-        Log.e(TAG, "setWordStatus update:"+word.getWord()+", status:"+word.getStatus());
+        globalInfo.getDb(WordActivity.this).update("t_words", values, where, whereArgs);
+        Log.e(TAG, "setWordStatus update:" + word.getWord() + ", status:" + word.getStatus());
 
         Cursor cursor = globalInfo.getDb(WordActivity.this).rawQuery("select status from t_words where id=?",new String[]{""+word.getId()});
         while (cursor.moveToNext()){
@@ -1067,22 +1110,22 @@ public class WordActivity extends AppCompatActivity {
             if(status>1)
                 revivenum++;
         }
-        Log.e(TAG, "syncWords newnum:"+newnum+", revivenum:"+revivenum);
-        editor.putInt("newnum",sp.getInt("newnum",0)+newnum);
-        editor.putInt("revivenum",sp.getInt("revivenum",0)+revivenum);
+        Log.e(TAG, "syncWords newnum:" + newnum + ", revivenum:" + revivenum);
+        editor.putInt("newnum", sp.getInt("newnum", 0) + newnum);
+        editor.putInt("revivenum", sp.getInt("revivenum", 0) + revivenum);
         editor.commit();
 
         final String syncDatas=builder.toString();
         final String syncIds=idsBuilder.toString();
         Log.e(TAG, "sync:"+syncDatas);
-        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/upwordstatus", Response.class, new GsonRequest.PostGsonRequest<Response>() {
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/upwordstatus", MainInfo.class, new GsonRequest.PostGsonRequest<MainInfo>() {
             final LoadingDialog loadingDialog = new LoadingDialog(WordActivity.this);
             @Override
             public void onStart() {
                 loadingDialog.show();
             }
             @Override
-            public void onResponse(Response resp) {
+            public void onResponse(MainInfo resp) {
                 loadingDialog.cancel();
                 if(resp.getError()!=null && resp.getError()!="" || resp.getErrno()!=0){
                     if(resp.getErrno()==601){
@@ -1095,13 +1138,27 @@ public class WordActivity extends AppCompatActivity {
                     String updateSql = "update t_words set sync=1 where userid=? and bookid=? and id in ("+syncIds+")";
                     Cursor cursor=globalInfo.getDb(WordActivity.this).rawQuery(updateSql, new String[]{""+userid,""+bookid});
                     Log.e(TAG, "sync ok:"+cursor.getCount()+", "+syncIds);
+
+                    int newnum=resp.getNewnum();
+                    int revivenum=resp.getRevivenum();
+                    int wordnum=resp.getWordnum();
+                    int isComplete=resp.getIsComplete();
+
+                    Log.e(TAG, "syncWords server newnum:"+newnum+", revivenum:"+revivenum);
+                    editor.putInt("newnum", newnum);
+                    editor.putInt("revivenum", revivenum);
+                    editor.putInt("wordnum", wordnum);
+                    editor.putInt("isComplete", isComplete);
+                    editor.commit();
                 }
+                handler.sendEmptyMessage(SYNC_FINISH);
             }
 
             @Override
             public void onError(VolleyError error) {
                 loadingDialog.cancel();
                 Log.e(TAG, "upwordstatus:" + error.toString());
+                handler.sendEmptyMessage(SYNC_FINISH);
             }
             @Override
             public void setPostData(Map datas) {
@@ -1116,6 +1173,25 @@ public class WordActivity extends AppCompatActivity {
 
     interface PlayMp3Event{
         void onComplete();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        startService(serviceIntent); // Myservice需要在清单文件中配置
+    };
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        stopService(serviceIntent);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        //接触绑定
+        unbindService(serviceConnection);
     }
 }
 

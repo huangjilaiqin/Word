@@ -264,39 +264,6 @@ public class PersionalActivity extends AppCompatActivity {
     }
 
 
-    private void loadUserInfo(final int userid,final String token){
-        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/userinfo", User.class, new GsonRequest.PostGsonRequest<User>() {
-            @Override
-            public void onStart() {}
-            @Override
-            public void onResponse(User user) {
-                if(user.getError()!=null && user.getError()!="" || user.getErrno()!=0){
-                    if(user.getErrno()==601){
-                        Intent intent = new Intent(PersionalActivity.this, LoginActivity.class);
-                        startActivityForResult(intent, 1);
-                    }else {
-                        Toast.makeText(PersionalActivity.this, "uploadUserInfo error:" + user.getError(), Toast.LENGTH_SHORT).show();
-                    }
-                }else {
-                    //本地存储
-
-                }
-            }
-
-            @Override
-            public void onError(VolleyError error) {
-                Log.e(TAG,error.toString());
-                Toast.makeText(PersionalActivity.this,  "网络错误，请检查网络", Toast.LENGTH_SHORT).show();
-            }
-            @Override
-            public void setPostData(Map datas) {
-                datas.put("userid", "" + userid);
-                datas.put("token", token);
-            }
-        });
-        VolleyHelper.getInstance().addToRequestQueue(gsonRequest);
-    }
-
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
