@@ -359,6 +359,8 @@ public class MainActivity extends AppCompatActivity {
             }
             */
         }
+
+        querySql("select count(id) from t_words where bookid=1",new String[]{});
     }
 
     private void afterLoadUser(User user){
@@ -662,6 +664,21 @@ public class MainActivity extends AppCompatActivity {
             cursor.close();
         }
         return toReviveSize;
+    }
+
+    private void querySql(String sql,String[] values){
+        Cursor cursor = globalInfo.getDb(getApplicationContext()).rawQuery(sql, values);
+        int columnSize=cursor.getColumnCount();
+        Log.e(TAG, "querySql "+cursor.getCount()+", "+columnSize);
+        while (cursor.moveToNext()){
+            StringBuilder builder=new StringBuilder();
+            for(int i=0;i<columnSize;i++){
+                builder.append(cursor.getString(i));
+                builder.append(",");
+            }
+            Log.e(TAG, builder.toString());
+            //Log.e(TAG, builder.substring(0,builder.length()-1));
+        }
     }
 }
 

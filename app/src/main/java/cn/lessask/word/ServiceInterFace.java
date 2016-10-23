@@ -10,6 +10,6 @@ public interface ServiceInterFace {
     boolean isDownloading();
     void downloadWordStatus(int userid,String token,int bookid);
     void checkSyncBook(int userid,String token,int bookid);
-    void storageBook(String wordsStr);
+    void storageBook(int userid,String token,int bookid,String wordsStr);
     void syncWords(int userid,String token,int bookid);
 }

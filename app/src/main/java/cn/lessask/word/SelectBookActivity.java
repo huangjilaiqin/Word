@@ -109,7 +109,7 @@ public class SelectBookActivity extends AppCompatActivity {
                     id=cursor.getInt(0);
                 }
 
-                changeBook(user.getUserid(),user.getToken(),id,book.getBookid());
+                changeBook(user.getUserid(),user.getToken(),book.getBookid());
 
                 SharedPreferences sp = SelectBookActivity.this.getSharedPreferences("SP", MODE_PRIVATE);
                 SharedPreferences.Editor editor=sp.edit();
@@ -206,8 +206,19 @@ public class SelectBookActivity extends AppCompatActivity {
         volleyHelper.addToRequestQueue(gsonRequest);
     }
 
-    private void changeBook(final int userid,final String token,final int id,final int bookid){
+    private void changeBook(final int userid,final String token,final int bookid){
         final LoadingDialog loadingDialog = new LoadingDialog(SelectBookActivity.this);
+        //切换词库,获取该词库本地最大的id
+        String[] where=new String[]{""+userid,""+bookid};
+        Cursor cursor = globalInfo.getDb(SelectBookActivity.this).rawQuery("select id from t_words where userid=? and bookid=? order by id desc limit 1",where);
+        int id=0;
+        if(cursor.getCount()>0) {
+            cursor.moveToNext();
+            id=cursor.getInt(0);
+        }
+
+        final int wid=id;
+
         GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/changebook", WordList.class, new GsonRequest.PostGsonRequest<WordList>() {
             @Override
             public void onStart() {
@@ -224,35 +235,6 @@ public class SelectBookActivity extends AppCompatActivity {
                         Toast.makeText(SelectBookActivity.this, "changeBook error:" + wordlist.getError(), Toast.LENGTH_SHORT).show();
                     }
                 }else {
-                    //本地存储
-                    final String wordsStr = wordlist.getWords();
-                    if (serviceInterFace != null) {
-                        serviceInterFace.storageBook(wordsStr);
-                    }
-                    /*
-                    if(wordsStr.length()>0) {
-                        final String[] words = wordsStr.split(";");
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                for (int i = 0, size = words.length; i < size; i++) {
-                                    String[] info = words[i].split(":");
-                                    ContentValues values = new ContentValues();
-                                    values.put("id", info[0]);
-                                    values.put("word", info[1]);
-                                    values.put("userid", userid);
-                                    values.put("bookid", bookid);
-                                    globalInfo.getDb(SelectBookActivity.this).insert("t_words", null, values);
-                                }
-                                loadingDialog.cancel();
-                                Log.e(TAG, "insert done");
-                            }
-                        }).start();
-                    }else{
-                        Log.e(TAG, "now new words,bookid:"+bookid);
-                        loadingDialog.cancel();
-                    }
-                    */
                     //设置bookid
                     SharedPreferences sp = SelectBookActivity.this.getSharedPreferences("SP", MODE_PRIVATE);
                     //存入数据
@@ -261,19 +243,26 @@ public class SelectBookActivity extends AppCompatActivity {
                     editor.commit();
                     user.setBookid(bookid);
                     haveChange=true;
+
+                    //本地存储
+                    final String wordsStr = wordlist.getWords();
+                    if (serviceInterFace != null) {
+                        serviceInterFace.storageBook(userid,token,bookid,wordsStr);
+                    }
                 }
             }
 
             @Override
             public void onError(VolleyError error) {
                 loadingDialog.cancel();
-                Toast.makeText(SelectBookActivity.this,  error.toString(), Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "changeBook error:"+error.getMessage());
+                Toast.makeText(SelectBookActivity.this,  "网络错误，请检查网络", Toast.LENGTH_SHORT).show();
             }
             @Override
             public void setPostData(Map datas) {
                 datas.put("userid", "" + userid);
                 datas.put("token", token);
-                datas.put("id",""+id);
+                datas.put("id",""+wid);
                 datas.put("bookid",""+bookid);
             }
         });

@@ -63,7 +63,9 @@ public class ServiceCrack extends Service implements ServiceInterFace{
     private TimerTask timerTask = new TimerTask() {
         @Override
         public void run() {
-            int currentReviewSize=queryReviewSized();
+            int userid=sp.getInt("userid",0);
+            int bookid=sp.getInt("bookid",0);
+            int currentReviewSize=queryReviewSized(userid,bookid);
             Log.e("ServiceCrack ", "currentReviewSize:"+currentReviewSize+", "+reviewSize);
             if(reviewSize!=currentReviewSize) {
                 reviewSize=currentReviewSize;
@@ -75,7 +77,6 @@ public class ServiceCrack extends Service implements ServiceInterFace{
     };
     private Timer timer=new Timer();
     //从本地加载
-    private int userid,bookid;
     private NotificationManager manager;
 
     @Override
@@ -85,8 +86,6 @@ public class ServiceCrack extends Service implements ServiceInterFace{
         sp = this.getSharedPreferences("SP", MODE_PRIVATE);
         editor = sp.edit();
         manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        userid = sp.getInt("userid", 0);
-        bookid = sp.getInt("bookid", 0);
         timer.schedule(timerTask, 0, 600000);
     }
 
@@ -120,7 +119,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
         manager.cancel(id);
     }
 
-    private int queryReviewSized(){
+    private int queryReviewSized(int userid,int bookid){
         //String [] timeDelta = new String[]{"-5 minute","-30 minute","-1 hour","-12 hour","-1 day"};
         //String [] timeDelta = new String[]{"-1 minute","-1 minute","-1 minute","-1 minute"};
         String [] timeDelta = new String[]{"-5 minute","-30 minute","-480 minute","-720 minute"};
@@ -219,7 +218,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
     private int downloading=0;
     private boolean downloadFinish=false;
 
-    private ArrayList<Word> getNotDownloadWords(int wordSize){
+    private ArrayList<Word> getNotDownloadWords(int userid,int bookid,int wordSize){
         String newSql = "select id,word,mean from t_words where userid=? and bookid=? and offline!=2 order by id limit ?";
         Cursor cursor = globalInfo.getDb(getBaseContext()).rawQuery(newSql,new String[]{""+userid,""+bookid,""+wordSize});
         ArrayList<Word> words = new ArrayList<>();
@@ -237,8 +236,6 @@ public class ServiceCrack extends Service implements ServiceInterFace{
 
     @Override
     public void startDownload(final int userid,final String token,final int bookid) {
-        this.userid=userid;
-        this.bookid=bookid;
 
         Log.e(TAG, "startDownload bookid:"+bookid);
         new Thread(new Runnable() {
@@ -254,7 +251,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
                     Log.e(TAG, "downloading:"+downloading);
                     if(downloading==0){
                         //查库调下载接口
-                        ArrayList<Word> words = getNotDownloadWords(20);
+                        ArrayList<Word> words = getNotDownloadWords(userid,bookid,20);
                         if(words.size()==0){
                             canDownload=false;
                             downloadFinish=true;
@@ -436,7 +433,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
     }
 
     private void syncBook(final int userid,final String token,final int bookid){
-        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/changebook", WordList.class, new GsonRequest.PostGsonRequest<WordList>() {
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/syncbook", WordList.class, new GsonRequest.PostGsonRequest<WordList>() {
             @Override
             public void onStart() {}
             @Override
@@ -446,6 +443,10 @@ public class ServiceCrack extends Service implements ServiceInterFace{
                 }
                 //本地存储
                 final String wordsStr = user.getWords();
+                if(wordsStr.length()==0)
+                    return;
+
+                /*
                 final String[] words = wordsStr.split(";");
                 new Thread(new Runnable() {
                     @Override
@@ -464,7 +465,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
                                 values.put("userid", userid);
                                 values.put("bookid", bookid);
                                 globalInfo.getDb(getBaseContext()).insert("t_words", null, values);
-                                //Log.e(TAG, "have word no:"+info[0]);
+                                Log.e(TAG, "have word no:"+info[0]);
                                 isInsert=true;
                             }else{
                                 //Log.e(TAG, "have word:"+info[0]);
@@ -476,6 +477,8 @@ public class ServiceCrack extends Service implements ServiceInterFace{
                             downloadWordStatus(userid,token,bookid);
                     }
                 }).start();
+                */
+                storageBook(userid,token,bookid,wordsStr);
                 //设置bookid
                 SharedPreferences sp = getBaseContext().getSharedPreferences("SP", MODE_PRIVATE);
                 //存入数据
@@ -489,9 +492,20 @@ public class ServiceCrack extends Service implements ServiceInterFace{
             }
             @Override
             public void setPostData(Map datas) {
+
+                //切换词库,获取该词库本地最大的id
+                String[] where=new String[]{""+userid,""+bookid};
+                Cursor cursor = globalInfo.getDb(getBaseContext()).rawQuery("select id from t_words where userid=? and bookid=? order by id desc limit 1",where);
+                int id=0;
+                if(cursor.getCount()>0) {
+                    cursor.moveToNext();
+                    id=cursor.getInt(0);
+                }
+
+
                 datas.put("userid", "" + userid);
                 datas.put("token", token);
-                //datas.put("id",""+id);
+                datas.put("id",""+id);
                 datas.put("bookid",""+bookid);
             }
         });
@@ -533,31 +547,62 @@ public class ServiceCrack extends Service implements ServiceInterFace{
     }
 
 
-    public void storageBook(String wordsStr){
-        if(wordsStr==null){
+    public void storageBook(final int userid,final String token,final int bookid,String wordsStr){
+        Log.e(TAG, "storageBook bookid:"+bookid+", wordsStr:"+wordsStr);
+        if(wordsStr==null || wordsStr.length()==0){
             Log.e(TAG, "storageBook error: wordsStr is null");
             return;
         }
-        if(wordsStr.length()>0) {
-            final String[] words = wordsStr.split(";");
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    SQLiteDatabase db=globalInfo.getDb(getApplicationContext());
-                    for (int i = 0, size = words.length; i < size; i++) {
-                        String[] info = words[i].split(":");
+        final String[] words = wordsStr.split(";");
+        /*
+        new Thread(new Runnable() {
+               @Override
+               public void run() {
+                SQLiteDatabase db=globalInfo.getDb(getApplicationContext());
+                for (int i = 0, size = words.length; i < size; i++) {
+                    String[] info = words[i].split(":");
+                    ContentValues values = new ContentValues();
+                    values.put("id", info[0]);
+                    values.put("word", info[1]);
+                    values.put("userid", userid);
+                    values.put("bookid", bookid);
+                    db.insert("t_words", null, values);
+                    Log.e(TAG, "insert id:"+info[1]);
+                }
+                Log.e(TAG, "insert done");
+            }
+        }).start();
+        */
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                SQLiteDatabase db = globalInfo.getDb(getBaseContext());
+                String[] where = new String[]{""+userid,""+bookid,"0"};
+                boolean isInsert=false;
+                for(int i=0,size=words.length;i<size;i++){
+                    String[] info = words[i].split(":");
+                    where[2]=info[0];
+                    Cursor cursor = db.rawQuery("select id from t_words where userid=? and bookid=? and id=?", where);
+                    if(cursor.getCount()==0) {
                         ContentValues values = new ContentValues();
                         values.put("id", info[0]);
                         values.put("word", info[1]);
                         values.put("userid", userid);
                         values.put("bookid", bookid);
-                        db.insert("t_words", null, values);
-                        Log.e(TAG, "insert id:"+info[1]);
+                        globalInfo.getDb(getBaseContext()).insert("t_words", null, values);
+                        Log.e(TAG, "have word no:"+info[0]);
+                        isInsert=true;
+                    }else{
+                        //Log.e(TAG, "have word:"+info[0]);
                     }
-                    Log.e(TAG, "insert done");
+                    cursor.close();
                 }
-            }).start();
-        }
+                Log.e(TAG, "insert done");
+                if(isInsert)
+                    downloadWordStatus(userid,token,bookid);
+            }
+        }).start();
     }
 
     public void syncWords(final int userid,final String token,final int bookid){
@@ -659,8 +704,8 @@ public class ServiceCrack extends Service implements ServiceInterFace{
         }
 
         @Override
-        public void storageBook(String wordsStr) {
-            ServiceCrack.this.storageBook(wordsStr);
+        public void storageBook(int userid,String token,int bookid,String wordsStr) {
+            ServiceCrack.this.storageBook(userid,token,bookid,wordsStr);
         }
 
         @Override
