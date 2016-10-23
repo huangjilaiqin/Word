@@ -4,12 +4,21 @@
     android:layout_height="124dp"
     android:orientation="vertical"
     >
+    <TextView
+        android:id="@+id/mark"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="6dp"
+        android:textSize="10sp"
+        android:text="契"
+        android:visibility="invisible"
+        />
     <View
         android:id="@+id/status"
         android:layout_width="24dp"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="6dp"
         android:layout_gravity="center_horizontal"
         android:background="@drawable/sign_item_bg"
         />

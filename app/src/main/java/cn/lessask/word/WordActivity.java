@@ -203,8 +203,18 @@ public class WordActivity extends AppCompatActivity {
         timer.schedule(task, time);
     }
 
+    /*
     @Override
     public void onBackPressed() {
+        Log.e(TAG, "onBackPressed");
+        onBack();
+    }
+    */
+
+    @Override
+    public void onBackPressed() {
+        //super.onBackPressed();
+        Log.e(TAG, "onBackPressed");
         onBack();
     }
 
@@ -1088,8 +1098,10 @@ public class WordActivity extends AppCompatActivity {
         StringBuilder builder = new StringBuilder();
         StringBuilder idsBuilder = new StringBuilder();
         int count = cursor.getCount();
-        if(count==0)
+        if(count==0) {
+            realBack();
             return;
+        }
         int status=0,newnum=0,revivenum=0;
         for(int i=0;i<count;i++){
             cursor.moveToNext();
@@ -1143,12 +1155,14 @@ public class WordActivity extends AppCompatActivity {
                     int revivenum=resp.getRevivenum();
                     int wordnum=resp.getWordnum();
                     int isComplete=resp.getIsComplete();
+                    user.setWordnum(wordnum);
 
                     Log.e(TAG, "syncWords server newnum:"+newnum+", revivenum:"+revivenum);
                     editor.putInt("newnum", newnum);
                     editor.putInt("revivenum", revivenum);
                     editor.putInt("wordnum", wordnum);
                     editor.putInt("isComplete", isComplete);
+
                     editor.commit();
                 }
                 handler.sendEmptyMessage(SYNC_FINISH);

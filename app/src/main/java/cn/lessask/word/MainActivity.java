@@ -19,6 +19,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CalendarView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.alipay.sdk.app.PayTask;
@@ -56,8 +57,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 
 public class MainActivity extends AppCompatActivity {
     private String TAG = MainActivity.class.getSimpleName();
-    private final int LOGIN=1;
-    private final int LEARN_WORD=2;
+
     private VolleyHelper volleyHelper = VolleyHelper.getInstance();
     private CircleImageView headImg;
     private RecyclerViewStatusSupport mRecyclerView;
@@ -73,11 +73,19 @@ public class MainActivity extends AppCompatActivity {
     private CircleProgressView toLearnProgress;
     private CircleProgressView toReviveProgress;
     private CircleProgressView depositProgress;
+    private TextView signInfoMsg;
+    private Button signStart;
 
     SharedPreferences sp;
     SharedPreferences.Editor editor;
 
+    private final int LOGIN=1;
     private final int GET_MININFO=1;
+    private final int LEARN_WORD=2;
+
+    private MyApplication myApplication;
+
+
     private Handler handler = new Handler(){
         @Override
         public void handleMessage(Message msg) {
@@ -99,18 +107,6 @@ public class MainActivity extends AppCompatActivity {
                     //toLearnProgress.setValue(newnum);
                     toLearnProgress.setValueAnimated(0, newnum, 1000);
                     toLearnProgress.setText(newnum + "/" + wordnum);
-                    /*
-                    toLearnProgress.setOnAnimationStateChangedListener(new AnimationStateChangedListener() {
-                        @Override
-                        public void onAnimationStateChanged(AnimationState _animationState) {
-                            switch (_animationState){
-                                case IDLE:
-                                    toLearnProgress.setOnAnimationStateChangedListener(null);
-                                    break;
-                            }
-                        }
-                    });
-                    //*/
 
                     //获取需要复习的个数
                     User user=globalInfo.getUser();
@@ -123,6 +119,25 @@ public class MainActivity extends AppCompatActivity {
                     depositProgress.setMaxValue(user.getDeposit());
                     depositProgress.setValueAnimated(0, user.getGetback(), 1000);
                     depositProgress.setText(user.getGetback()+"/"+user.getDeposit());
+                    break;
+                case LEARN_WORD:
+                    newnum=sp.getInt("newnum",0);
+                    revivenum=sp.getInt("revivenum",0);
+                    wordnum=sp.getInt("wordnum",20);
+
+                    toLearnProgress.setMaxValue(wordnum);
+                    //toLearnProgress.setValue(newnum);
+                    toLearnProgress.setValueAnimated(0, newnum, 1000);
+                    toLearnProgress.setText(newnum + "/" + wordnum);
+
+                    //获取需要复习的个数
+                    user=globalInfo.getUser();
+                    torevive=queryReviveSized(user.getUserid(),user.getBookid());
+                    total=torevive+revivenum;
+                    toReviveProgress.setMaxValue(total);
+                    toReviveProgress.setValueAnimated(0, revivenum, 1000);
+                    toReviveProgress.setText(revivenum+"/"+total);
+
                     break;
             }
         }
@@ -206,6 +221,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         serviceIntent = new Intent(this, ServiceCrack.class);
+        myApplication=(MyApplication) getApplication();
 
         setContentView(R.layout.activity_main);
 
@@ -228,12 +244,14 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        /*
         findViewById(R.id.info).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(MainActivity.this, SignInfoActivity.class));
             }
         });
+        */
 
         mLinearLayoutManager = new LinearLayoutManager(this);
         mLinearLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
@@ -250,8 +268,10 @@ public class MainActivity extends AppCompatActivity {
         toReviveProgress.setTextMode(TextMode.TEXT);
         depositProgress=(CircleProgressView)findViewById(R.id.deposit);
         depositProgress.setTextMode(TextMode.TEXT);
+        signInfoMsg=(TextView)findViewById(R.id.sign_info_msg);
+        signStart=(Button)findViewById(R.id.start);
 
-        findViewById(R.id.start).setOnClickListener(new View.OnClickListener() {
+        signStart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 buy();
@@ -335,13 +355,13 @@ public class MainActivity extends AppCompatActivity {
                 globalInfo.setUser(user);
                 loadHeadImg(user.getHeadimg());
                 bindService(serviceIntent, connection, BIND_AUTO_CREATE);
-                atferLoadUser();
+                afterLoadUser();
             }
             */
         }
     }
 
-    private void atferLoadUser(User user){
+    private void afterLoadUser(User user){
 
         storageUser(user);
         globalInfo.setUser(user);
@@ -349,12 +369,21 @@ public class MainActivity extends AppCompatActivity {
         bindService(serviceIntent, connection, BIND_AUTO_CREATE);
         loadSign();
         loadMainInfo(user.getUserid(),user.getToken());
+        if(user.getSignid()==0){
+            signInfoMsg.setVisibility(View.VISIBLE);
+            signStart.setVisibility(View.VISIBLE);
+        }else{
+            signInfoMsg.setVisibility(View.INVISIBLE);
+            signStart.setVisibility(View.INVISIBLE);
+        }
     }
 
     private void loadMainInfo(final int userid,final String token){
         GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/maininfo", MainInfo.class, new GsonRequest.PostGsonRequest<MainInfo>() {
             @Override
-            public void onStart() {}
+            public void onStart() {
+                Log.e(TAG, "loadMainInfo");
+            }
             @Override
             public void onResponse(MainInfo data) {
                 Message msg=new Message();
@@ -386,6 +415,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onError(VolleyError error) {
+                Log.e(TAG, "maininfo error:"+error.getMessage());
                 //Toast.makeText(MainActivity.this,  error.toString(), Toast.LENGTH_SHORT).show();
                 Message msg=new Message();
                 msg.what=GET_MININFO;
@@ -417,7 +447,7 @@ public class MainActivity extends AppCompatActivity {
                 }else {
                     //本地存储
                     Log.e(TAG, "bookid test:" + user.getBookid());
-                    atferLoadUser(user);
+                    afterLoadUser(user);
                 }
             }
 
@@ -430,6 +460,10 @@ public class MainActivity extends AppCompatActivity {
             public void setPostData(Map datas) {
                 datas.put("userid", "" + userid);
                 datas.put("token", token);
+                datas.put("os","Android");
+                datas.put("versionCode",""+myApplication.getVersionCode());
+                datas.put("versionName",myApplication.getVersionName());
+                datas.put("comefrom",myApplication.getChannel());
             }
         });
         VolleyHelper.getInstance().addToRequestQueue(gsonRequest);
@@ -491,13 +525,15 @@ public class MainActivity extends AppCompatActivity {
                     User user = data.getParcelableExtra("user");
                     Log.e(TAG, "onActivityResult userid:" + user.getUserid() + ", nickname:" + user.getNickname()+", headimg:"+user.getHeadimg());
 
-                    atferLoadUser(user);
+                    afterLoadUser(user);
                     break;
                 case LEARN_WORD:
                     User user1=globalInfo.getUser();
                     Log.e(TAG, "learn_word");
                     if(sp.getInt("isComplete",0)==1)
                         loadUserInfo(user1.getUserid(), user1.getToken());
+                    else
+                        handler.sendEmptyMessage(LEARN_WORD);
                     break;
             }
         }
@@ -606,7 +642,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void setPostData(Map datas) {
                 datas.put("userid",""+globalInfo.getUser().getUserid());
-                datas.put("contractid","0");
+                datas.put("contractid","2");
                 datas.put("wordnum","20");
                 datas.put("tradetype","1");
                 datas.put("tradeplat","1");

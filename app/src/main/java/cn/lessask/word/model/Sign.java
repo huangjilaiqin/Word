@@ -7,17 +7,27 @@ import java.util.Date;
  */
 public class Sign {
     private int id;
+    private int signid;
     private Date time;
     private int revivenum;
     private int newnum;
     private int status;
 
-    public Sign(int id, Date time, int revivenum, int newnum, int status) {
+    public Sign(int id,int signid, Date time, int revivenum, int newnum, int status) {
         this.id = id;
+        this.signid=signid;
         this.time = time;
         this.revivenum = revivenum;
         this.newnum = newnum;
         this.status = status;
+    }
+
+    public int getSignid() {
+        return signid;
+    }
+
+    public void setSignid(int signid) {
+        this.signid = signid;
     }
 
     public int getId() {

@@ -83,14 +83,22 @@ public class SignAdapter extends BaseRecyclerAdapter<Sign, SignAdapter.MyViewHol
                 return false;
             }
         });
+
+        if(data.getSignid()!=0){
+            myHolder.mark.setVisibility(View.VISIBLE);
+        }else {
+            myHolder.mark.setVisibility(View.INVISIBLE);
+        }
     }
 
     public class MyViewHolder extends RecyclerView.ViewHolder{
         View itemView;
+        TextView mark;
         TextView day;
         public MyViewHolder(View itemView) {
             super(itemView);
             this.itemView=itemView;
+            mark=(TextView)itemView.findViewById(R.id.mark);
             day=(TextView)itemView.findViewById(R.id.day);
         }
     }

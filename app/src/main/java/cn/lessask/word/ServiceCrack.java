@@ -552,6 +552,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
                         values.put("userid", userid);
                         values.put("bookid", bookid);
                         db.insert("t_words", null, values);
+                        Log.e(TAG, "insert id:"+info[1]);
                     }
                     Log.e(TAG, "insert done");
                 }
