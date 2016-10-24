@@ -244,14 +244,14 @@ public class ServiceCrack extends Service implements ServiceInterFace{
                 canDownload=true;
                 downloading=0;
                 float rate = getOfflineRate(userid,bookid);
-                if(rate==1)
+                if(rate>=1)
                     downloadFinish=true;
                 Log.e(TAG, "canDownload:"+canDownload+", downloadFinish:"+downloadFinish+", downloading:"+downloading);
                 while (canDownload && !downloadFinish){
                     Log.e(TAG, "downloading:"+downloading);
                     if(downloading==0){
                         //查库调下载接口
-                        ArrayList<Word> words = getNotDownloadWords(userid,bookid,20);
+                        ArrayList<Word> words = getNotDownloadWords(userid,bookid,50);
                         if(words.size()==0){
                             canDownload=false;
                             downloadFinish=true;
@@ -303,6 +303,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
         synchronized (getBaseContext()) {
             offlineWords++;
             Log.e(TAG, "offline word repaire wid:" + wid);
+            //todo
             if(mySet.contains(wid))
                 Log.e(TAG, "repeat 2 wid:"+wid);
             mySet.add(wid);
@@ -321,6 +322,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
         SQLiteDatabase db = globalInfo.getDb(getApplicationContext());
         String sql = "select id from t_words where userid=? and bookid=? and id=? and offline=2";
         Cursor cursor=db.rawQuery(sql, new String[]{"" + userid, "" + bookid,""+wid});
+        Log.e(TAG, "checkOffline "+wid);
         if(cursor.getCount()==1){
             synchronized (getBaseContext()) {
                 offlineWords++;
@@ -446,38 +448,6 @@ public class ServiceCrack extends Service implements ServiceInterFace{
                 if(wordsStr.length()==0)
                     return;
 
-                /*
-                final String[] words = wordsStr.split(";");
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        SQLiteDatabase db = globalInfo.getDb(getBaseContext());
-                        String[] where = new String[]{""+userid,""+bookid,"0"};
-                        boolean isInsert=false;
-                        for(int i=0,size=words.length;i<size;i++){
-                            String[] info = words[i].split(":");
-                            where[2]=info[0];
-                            Cursor cursor = db.rawQuery("select id from t_words where userid=? and bookid=? and id=?", where);
-                            if(cursor.getCount()==0) {
-                                ContentValues values = new ContentValues();
-                                values.put("id", info[0]);
-                                values.put("word", info[1]);
-                                values.put("userid", userid);
-                                values.put("bookid", bookid);
-                                globalInfo.getDb(getBaseContext()).insert("t_words", null, values);
-                                Log.e(TAG, "have word no:"+info[0]);
-                                isInsert=true;
-                            }else{
-                                //Log.e(TAG, "have word:"+info[0]);
-                            }
-                            cursor.close();
-                        }
-                        Log.e(TAG, "insert done");
-                        if(isInsert)
-                            downloadWordStatus(userid,token,bookid);
-                    }
-                }).start();
-                */
                 storageBook(userid,token,bookid,wordsStr);
                 //设置bookid
                 SharedPreferences sp = getBaseContext().getSharedPreferences("SP", MODE_PRIVATE);

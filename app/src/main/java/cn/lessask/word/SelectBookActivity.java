@@ -246,9 +246,11 @@ public class SelectBookActivity extends AppCompatActivity {
 
                     //本地存储
                     final String wordsStr = wordlist.getWords();
-                    if (serviceInterFace != null) {
+                    if (serviceInterFace != null && wordsStr!=null && wordsStr.length()>0) {
                         serviceInterFace.storageBook(userid,token,bookid,wordsStr);
                     }
+
+                    querySql("select bookid,count(id) as num from t_words group by bookid",new String[]{});
                 }
             }
 
@@ -286,5 +288,20 @@ public class SelectBookActivity extends AppCompatActivity {
         super.onDestroy();
         //接触绑定
         unbindService(serviceConnection);
+    }
+
+    private void querySql(String sql,String[] values){
+        Cursor cursor = globalInfo.getDb(getApplicationContext()).rawQuery(sql, values);
+        int columnSize=cursor.getColumnCount();
+        Log.e(TAG, "querySql "+cursor.getCount()+", "+columnSize);
+        while (cursor.moveToNext()){
+            StringBuilder builder=new StringBuilder();
+            for(int i=0;i<columnSize;i++){
+                builder.append(cursor.getString(i));
+                builder.append(",");
+            }
+            Log.e(TAG, builder.toString());
+            //Log.e(TAG, builder.substring(0,builder.length()-1));
+        }
     }
 }

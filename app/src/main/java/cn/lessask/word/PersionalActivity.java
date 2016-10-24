@@ -141,8 +141,11 @@ public class PersionalActivity extends AppCompatActivity {
             }
         });
 
+        TextView nickname = (TextView)findViewById(R.id.nickname);
+        nickname.setText(user.getNickname());
+
         TextView purchAmount=(TextView) findViewById(R.id.purch_amount);
-        DecimalFormat decimalFormat=new DecimalFormat(".00");
+        DecimalFormat decimalFormat=new DecimalFormat("0.00");
         purchAmount.setText(decimalFormat.format(user.getMoney()));
         /*
         findViewById(R.id.purch).setOnClickListener(new View.OnClickListener() {
@@ -256,7 +259,7 @@ public class PersionalActivity extends AppCompatActivity {
         };
 
         timer=new Timer();
-        timer.schedule(timerTask, 0, 1000);
+        timer.schedule(timerTask, 0, 100);
     }
     private void loadHeadImg(String url){
         ImageLoader.ImageListener headImgListener = ImageLoader.getImageListener(headImg, 0, 0);

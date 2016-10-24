@@ -360,7 +360,7 @@ public class MainActivity extends AppCompatActivity {
             */
         }
 
-        querySql("select count(id) from t_words where bookid=1",new String[]{});
+        querySql("select id,word from t_words where bookid=2 order by id",new String[]{});
     }
 
     private void afterLoadUser(User user){
@@ -508,7 +508,7 @@ public class MainActivity extends AppCompatActivity {
         //db.execSQL("create table t_user(userid INTEGER primary key,token text,nickname text,headimg text,gender text)");
         //db.execSQL("create table t_books(userid integer,bookid integer,completeness real,current integer)");
         db.execSQL("create table t_words(`id` INTEGER not null,`userid` INTEGER not null,`bookid` integer not null,`word` text not null,`usphone` text default '',`ukphone` text default '',mean text default '',sentence text default '',`review` TIMESTAMP,`status` tinyint not null default 0,`sync` tinyint not null default 1,offline tinyint not null default 0)");
-        db.execSQL("create index iduidbid on t_words(id,userid,bookid)");
+        db.execSQL("create UNIQUE index iduidbid on t_words(id,userid,bookid)");
 
         Log.e(TAG, "create db end");
 
