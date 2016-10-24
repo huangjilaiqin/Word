@@ -320,10 +320,13 @@ public class ServiceCrack extends Service implements ServiceInterFace{
     private Set<Integer> mySet=new HashSet<>();
     private void checkOffline(int userid,int bookid,int wid){
         SQLiteDatabase db = globalInfo.getDb(getApplicationContext());
-        String sql = "select id from t_words where userid=? and bookid=? and id=? and offline=2";
+        String sql = "select offline from t_words where userid=? and bookid=? and id=?";
         Cursor cursor=db.rawQuery(sql, new String[]{"" + userid, "" + bookid,""+wid});
-        Log.e(TAG, "checkOffline "+wid);
-        if(cursor.getCount()==1){
+        if(cursor.moveToNext()){
+            int offline=cursor.getInt(0);
+            Log.e(TAG, "checkOffline "+wid+", online:"+offline);
+            if(offline!=2)
+                return;
             synchronized (getBaseContext()) {
                 offlineWords++;
                 Log.e(TAG, "getOfflineRate:"+offlineWords);
