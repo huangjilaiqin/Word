@@ -258,6 +258,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
                             break;
                         }
                         ArrayList<String> wordsStr = new ArrayList<String>();
+                        Map<File,Word> notExistsPhone = new HashMap<File,Word>();
                         boolean isoffline=true;
                         for(int i=0;i<words.size();i++){
                             isoffline=true;
@@ -274,15 +275,18 @@ public class ServiceCrack extends Service implements ServiceInterFace{
                             File phoneFile = new File(Constant.phonePrefixPath,filename);
                             if(!phoneFile.exists()){
                                 isoffline=false;
-                                downloadPhone(userid,word,"uk",phoneFile);
-                            }else {
-                                Log.e(TAG,"phone exists:"+phoneFile);
+                                notExistsPhone.put(phoneFile,word);
                             }
                             if(isoffline)
                                 repaireOfflineStatus(userid,bookid,word.getId());
                         }
-                        if(wordsStr.size()>0)
-                            downloadWords(userid,token,bookid, StringUtil.join(wordsStr,","));
+                        if(wordsStr.size()>0) {
+                            downloadWords(userid, token, bookid, StringUtil.join(wordsStr, ","));
+                            Log.e(TAG, "downloadWords wordsStr:"+StringUtil.join(wordsStr, ","));
+                        }
+                        for (Map.Entry<File,Word> entry : notExistsPhone.entrySet()) {
+                            downloadPhone(userid, entry.getValue(), "uk", entry.getKey());
+                        }
                     }
                     //休息
                     try {
@@ -346,7 +350,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
     }
 
     private void downloadPhone(final int userid,final Word word, String type, File phoneFile){
-        Log.e(TAG, "downloadPhone word:"+word.getWord());
+        Log.e(TAG, "download phone start:"+word.getWord());
         String url = "http://120.24.75.92:5006/word/downloadphone?word="+word.getWord()+"&type="+type;
         final String path = phoneFile.getPath();
         networkFileHelper.startGetFile(url, path, new NetworkFileHelper.GetFileRequest() {
@@ -364,9 +368,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
                     if (file.exists()) {
                         //更新数据库
                         incrOffline(userid, word.getBookid(), word.getId());
-                        Log.e(TAG, "download phone:" + word.getWord());
-                    } else {
-                        Log.e(TAG, "not exists:" + path);
+                        Log.e(TAG, "download phone ok:" + word.getWord());
                     }
                 }
                 changeDownloadStatus(-1);
@@ -527,25 +529,6 @@ public class ServiceCrack extends Service implements ServiceInterFace{
             return;
         }
         final String[] words = wordsStr.split(";");
-        /*
-        new Thread(new Runnable() {
-               @Override
-               public void run() {
-                SQLiteDatabase db=globalInfo.getDb(getApplicationContext());
-                for (int i = 0, size = words.length; i < size; i++) {
-                    String[] info = words[i].split(":");
-                    ContentValues values = new ContentValues();
-                    values.put("id", info[0]);
-                    values.put("word", info[1]);
-                    values.put("userid", userid);
-                    values.put("bookid", bookid);
-                    db.insert("t_words", null, values);
-                    Log.e(TAG, "insert id:"+info[1]);
-                }
-                Log.e(TAG, "insert done");
-            }
-        }).start();
-        */
 
         new Thread(new Runnable() {
             @Override

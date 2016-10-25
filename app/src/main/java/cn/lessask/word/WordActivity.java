@@ -298,6 +298,7 @@ public class WordActivity extends AppCompatActivity {
                     }else {
                         Toast.makeText(WordActivity.this, "changeList error:" + resp.getError(), Toast.LENGTH_SHORT).show();
                     }
+                    return;
                 }else {
                     //本地存储
                     ArrayList<Word> words = resp.getDatas();
@@ -329,7 +330,9 @@ public class WordActivity extends AppCompatActivity {
             @Override
             public void onError(VolleyError error) {
                 loadingDialog.cancel();
-                Toast.makeText(WordActivity.this,  error.toString(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(WordActivity.this,  "请检查网络! 词库离线后可断网使用", Toast.LENGTH_LONG).show();
+                //返回到主界面，网络异常这个界面就空白了
+                realBack();
             }
             @Override
             public void setPostData(Map datas) {
@@ -1064,8 +1067,8 @@ public class WordActivity extends AppCompatActivity {
 
                 @Override
                 public void onError(String error) {
-                    Toast.makeText(WordActivity.this, "getphone error" + error, Toast.LENGTH_LONG).show();
-                    Log.e(TAG, error);
+                    Toast.makeText(WordActivity.this, "网络异常", Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, error.toString());
                 }
             });
         }

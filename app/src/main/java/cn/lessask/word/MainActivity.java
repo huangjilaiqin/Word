@@ -162,7 +162,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unbindService(connection);
+        //没网的情况下服务未绑定，解绑会报错
+        try {
+            unbindService(connection);
+        }catch (Exception e){
+            Log.e(TAG,e.getMessage());
+        }
     }
 
     private void callAliPay2(){
@@ -233,7 +238,9 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.refresh).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                loadSign();
+                //loadSign();
+                mRecyclerView.showLoadingView();
+                refreshMainInfo();
             }
         });
 
@@ -333,6 +340,11 @@ public class MainActivity extends AppCompatActivity {
         //User tuser = new User(1,"qq_F4327C81A7510540DCB6E9759010348F","唐三炮","272233d9580dab2c9e432992a0659b88","http://q.qlogo.cn/qqapp/1105464601/F4327C81A7510540DCB6E9759010348F/100","男");
         //storageUser(tuser);
 
+        refreshMainInfo();
+        querySql("select id,word from t_words where bookid=2 order by id",new String[]{});
+    }
+
+    private void refreshMainInfo(){
         int userid = sp.getInt("userid", 0);
         String token = sp.getString("token", "");
         String nickname = sp.getString("nickname", "");
@@ -341,26 +353,19 @@ public class MainActivity extends AppCompatActivity {
         int bookid = sp.getInt("bookid",0);
         Log.e(TAG, "local bookid:"+bookid);
 
+        User user=new User();
+        user.setUserid(userid);
+        user.setToken(token);
+        user.setBookid(bookid);
+        //防止在没网或者loadUserinfo未返回前进入学习单词界面获取不到user对象
+        globalInfo.setUser(user);
+
         if(userid==0 || token==""){
             Intent intent = new Intent(MainActivity.this, LoginActivity.class);
             startActivityForResult(intent, LOGIN);
         }else{
             loadUserInfo(userid,token);
-            /*
-            if(nickname==""||headimg==""||bookid==0){
-                //加载用户信息
-                loadUserInfo(userid,token);
-            }else{
-                User user = new User(userid,"",nickname,token,headimg,gender,bookid);
-                globalInfo.setUser(user);
-                loadHeadImg(user.getHeadimg());
-                bindService(serviceIntent, connection, BIND_AUTO_CREATE);
-                afterLoadUser();
-            }
-            */
         }
-
-        querySql("select id,word from t_words where bookid=2 order by id",new String[]{});
     }
 
     private void afterLoadUser(User user){
@@ -455,8 +460,9 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onError(VolleyError error) {
-                Log.e(TAG,error.toString());
-                Toast.makeText(MainActivity.this,  "网络错误，请检查网络", Toast.LENGTH_SHORT).show();
+                Log.e(TAG, error.toString());
+                mRecyclerView.showErrorView("网络错误，请检查网络");
+                //Toast.makeText(MainActivity.this,  "网络错误，请检查网络", Toast.LENGTH_SHORT).show();
             }
             @Override
             public void setPostData(Map datas) {
@@ -578,7 +584,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onError(VolleyError error) {
-                Log.e(TAG,error.toString());
+                Log.e(TAG,"loadSign error:"+error.toString());
                 mRecyclerView.showErrorView("请检查网络！");
             }
 
