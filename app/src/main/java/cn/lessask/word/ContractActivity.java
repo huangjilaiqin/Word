@@ -106,7 +106,7 @@ public class ContractActivity extends AppCompatActivity {
     private void loadContract(){
         Type type = new TypeToken<ArrayListResponse<Contract>>() {}.getType();
 
-        String url = "http://120.24.75.92:5006/word/contract";
+        String url = GlobalInfo.host+"/word/contract";
         GsonRequest gsonRequest = new GsonRequest<ArrayListResponse<Contract>>(Request.Method.POST,url,type,new GsonRequest.PostGsonRequest<ArrayListResponse<Contract>>(){
             @Override
             public void onStart() {

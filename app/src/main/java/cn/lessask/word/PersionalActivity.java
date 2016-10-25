@@ -212,7 +212,7 @@ public class PersionalActivity extends AppCompatActivity {
     }
 
     private void queryBookInfo(final int userid,final String token,final int bookid){
-        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/bookinfo", Book.class, new GsonRequest.PostGsonRequest<Book>() {
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, GlobalInfo.host+"/word/bookinfo", Book.class, new GsonRequest.PostGsonRequest<Book>() {
             @Override
             public void onStart() {}
             @Override

@@ -301,4 +301,23 @@ public class TimeHelper {
         });
         return builder.create();
     }
+
+    public static boolean isCurrentDay(Date date){
+        GregorianCalendar now = new GregorianCalendar();
+        now.setTime(new Date());
+        int nowYear = now.get(GregorianCalendar.YEAR);
+        int nowMonth = now.get(GregorianCalendar.MONTH) + 1;
+        int nowDay = now.get(GregorianCalendar.DAY_OF_MONTH);
+
+        GregorianCalendar check = new GregorianCalendar();
+        check.setTime(date);
+        int checkYear = check.get(GregorianCalendar.YEAR);
+        int checkMonth = check.get(GregorianCalendar.MONTH) + 1;
+        int checkDay = check.get(GregorianCalendar.DAY_OF_MONTH);
+
+        if(nowDay==checkDay && nowMonth==checkMonth && nowYear==checkYear)
+            return true;
+        else
+            return false;
+    }
 }

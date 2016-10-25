@@ -10,6 +10,7 @@ import cn.lessask.word.model.User;
  * Created by laiqin on 16/4/3.
  */
 public class GlobalInfo {
+
     private GlobalInfo(){}
     public static final GlobalInfo getInstance(){
         return LazyHolder.INSTANCE;
@@ -24,7 +25,6 @@ public class GlobalInfo {
 
     public User getUser() {
         if(user==null){
-
             /*
             SharedPreferences sp = .getSharedPreferences("SP", MODE_PRIVATE);
             //为审核伪造的用户信息
@@ -41,6 +41,8 @@ public class GlobalInfo {
         }
         return user;
     }
+
+    public static String host="http://120.24.75.92:5006";
 
     public void setUser(User user) {
         this.user = user;

@@ -169,7 +169,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
     }
     private void downloadWords(final int userid,final String token,final int bookid,final String wordsStr){
         Type type = new TypeToken<ArrayListResponse<Word>>() {}.getType();
-        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/downloadwords", type, new GsonRequest.PostGsonRequest<ArrayListResponse>() {
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, GlobalInfo.host+"/word/downloadwords", type, new GsonRequest.PostGsonRequest<ArrayListResponse>() {
             @Override
             public void onStart() {
                 changeDownloadStatus(1);
@@ -351,7 +351,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
 
     private void downloadPhone(final int userid,final Word word, String type, File phoneFile){
         Log.e(TAG, "download phone start:"+word.getWord());
-        String url = "http://120.24.75.92:5006/word/downloadphone?word="+word.getWord()+"&type="+type;
+        String url = GlobalInfo.host+"/word/downloadphone?word="+word.getWord()+"&type="+type;
         final String path = phoneFile.getPath();
         networkFileHelper.startGetFile(url, path, new NetworkFileHelper.GetFileRequest() {
             @Override
@@ -398,7 +398,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
 
     public void downloadWordStatus(final int userid,final String token,final int bookid) {
         Type type = new TypeToken<ArrayListResponse<WordStatus>>(){}.getType();
-        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/downloadwordstatus", type, new GsonRequest.PostGsonRequest<ArrayListResponse>() {
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, GlobalInfo.host+"/word/downloadwordstatus", type, new GsonRequest.PostGsonRequest<ArrayListResponse>() {
             @Override
             public void onStart() {
             }
@@ -440,7 +440,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
     }
 
     private void syncBook(final int userid,final String token,final int bookid){
-        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/syncbook", WordList.class, new GsonRequest.PostGsonRequest<WordList>() {
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, GlobalInfo.host+"/word/syncbook", WordList.class, new GsonRequest.PostGsonRequest<WordList>() {
             @Override
             public void onStart() {}
             @Override
@@ -489,7 +489,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
 
     public void checkSyncBook(final int userid,final String token,final int bookid){
         Log.e(TAG, "checkSyncBook bookid:"+bookid);
-        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/bookinfo", Book.class, new GsonRequest.PostGsonRequest<Book>() {
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, GlobalInfo.host+"/word/bookinfo", Book.class, new GsonRequest.PostGsonRequest<Book>() {
             @Override
             public void onStart() {}
             @Override
@@ -598,7 +598,7 @@ public class ServiceCrack extends Service implements ServiceInterFace{
         final String syncDatas=builder.toString();
         final String syncIds=idsBuilder.toString();
         Log.e(TAG, "sync:"+syncDatas);
-        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/upwordstatus", Response.class, new GsonRequest.PostGsonRequest<Response>() {
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, GlobalInfo.host+"/word/upwordstatus", Response.class, new GsonRequest.PostGsonRequest<Response>() {
             @Override
             public void onStart() {
             }

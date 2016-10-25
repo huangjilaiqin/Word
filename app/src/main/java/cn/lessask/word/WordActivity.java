@@ -283,7 +283,7 @@ public class WordActivity extends AppCompatActivity {
         //loadingDialog
         Log.e(TAG, "downloadWrods:"+wordsStr);
         Type type = new TypeToken<ArrayListResponse<Word>>() {}.getType();
-        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/downloadwords", type, new GsonRequest.PostGsonRequest<ArrayListResponse>() {
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, GlobalInfo.host+"/word/downloadwords", type, new GsonRequest.PostGsonRequest<ArrayListResponse>() {
             @Override
             public void onStart() {
                 loadingDialog.show();
@@ -1040,7 +1040,7 @@ public class WordActivity extends AppCompatActivity {
 
     //type: 1英式发音，2美式发音
     private void playPhoneFile(String word,String type,final PlayMp3Event event){
-        String url = "http://120.24.75.92:5006/word/downloadphone?word="+word+"&type="+type;
+        String url = GlobalInfo.host+"/word/downloadphone?word="+word+"&type="+type;
         String filename=word+"_"+type+".mp3";
         File phoneFile = new File(Constant.phonePrefixPath,filename);
         if(phoneFile.exists()){
@@ -1133,7 +1133,7 @@ public class WordActivity extends AppCompatActivity {
         final String syncDatas=builder.toString();
         final String syncIds=idsBuilder.toString();
         Log.e(TAG, "sync:"+syncDatas);
-        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/upwordstatus", MainInfo.class, new GsonRequest.PostGsonRequest<MainInfo>() {
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, GlobalInfo.host+"/word/upwordstatus", MainInfo.class, new GsonRequest.PostGsonRequest<MainInfo>() {
             final LoadingDialog loadingDialog = new LoadingDialog(WordActivity.this);
             @Override
             public void onStart() {

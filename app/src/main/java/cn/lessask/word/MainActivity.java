@@ -31,6 +31,7 @@ import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -386,7 +387,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadMainInfo(final int userid,final String token){
-        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/maininfo", MainInfo.class, new GsonRequest.PostGsonRequest<MainInfo>() {
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, GlobalInfo.host+"/word/maininfo", MainInfo.class, new GsonRequest.PostGsonRequest<MainInfo>() {
             @Override
             public void onStart() {
                 Log.e(TAG, "loadMainInfo");
@@ -439,7 +440,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadUserInfo(final int userid,final String token){
-        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/userinfo", User.class, new GsonRequest.PostGsonRequest<User>() {
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, GlobalInfo.host+"/word/userinfo", User.class, new GsonRequest.PostGsonRequest<User>() {
             @Override
             public void onStart() {}
             @Override
@@ -562,7 +563,7 @@ public class MainActivity extends AppCompatActivity {
     private void loadSign(){
         Type type = new TypeToken<ArrayListResponse<Sign>>() {}.getType();
 
-        String url = "http://120.24.75.92:5006/word/sign";
+        String url = GlobalInfo.host+"/word/sign";
 
         GsonRequest gsonRequest = new GsonRequest<ArrayListResponse<Sign>>(Request.Method.POST,url,type,new GsonRequest.PostGsonRequest<ArrayListResponse<Sign>>(){
             @Override
@@ -579,6 +580,16 @@ public class MainActivity extends AppCompatActivity {
                     List<Sign> signs = response.getDatas();
                     mRecyclerViewAdapter.appendToList(signs);
                     mRecyclerViewAdapter.notifyDataSetChanged();
+
+                    int currentDateIndex=signs.size();
+                    for(int i=0,size=signs.size();i<size;i++){
+                        Date d = signs.get(i).getTime();
+                        if(TimeHelper.isCurrentDay(d)){
+                            currentDateIndex=i;
+                            break;
+                        }
+                    }
+                    mRecyclerView.scrollToPosition(currentDateIndex);
                 }
             }
 

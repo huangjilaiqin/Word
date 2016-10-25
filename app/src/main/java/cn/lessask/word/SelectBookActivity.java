@@ -163,7 +163,7 @@ public class SelectBookActivity extends AppCompatActivity {
     private void loadBooks(){
         Type type = new TypeToken<ArrayListResponse<Book>>() {}.getType();
 
-        String url = "http://120.24.75.92:5006/word/books";
+        String url = GlobalInfo.host+"/word/books";
         GsonRequest gsonRequest = new GsonRequest<ArrayListResponse<Book>>(Request.Method.POST,url,type,new GsonRequest.PostGsonRequest<ArrayListResponse<Book>>(){
             @Override
             public void onStart() {
@@ -219,7 +219,7 @@ public class SelectBookActivity extends AppCompatActivity {
 
         final int wid=id;
 
-        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/changebook", WordList.class, new GsonRequest.PostGsonRequest<WordList>() {
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, GlobalInfo.host+"/word/changebook", WordList.class, new GsonRequest.PostGsonRequest<WordList>() {
             @Override
             public void onStart() {
                 loadingDialog.show();

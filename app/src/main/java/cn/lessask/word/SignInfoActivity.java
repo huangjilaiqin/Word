@@ -11,6 +11,7 @@ import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 
 import cn.lessask.word.dialog.LoadingDialog;
+import cn.lessask.word.util.GlobalInfo;
 
 public class SignInfoActivity extends AppCompatActivity {
 
@@ -36,7 +37,7 @@ public class SignInfoActivity extends AppCompatActivity {
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
 
-        webView.loadUrl("http://120.24.75.92:5006/word/sign_info.html");
+        webView.loadUrl(GlobalInfo.host+"/word/sign_info.html");
         //覆盖WebView默认使用第三方或系统默认浏览器打开网页的行为，使网页用WebView打开
         webView.setWebViewClient(new WebViewClient() {
             @Override

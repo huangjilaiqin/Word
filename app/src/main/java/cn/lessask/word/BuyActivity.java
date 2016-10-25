@@ -178,7 +178,7 @@ public class BuyActivity extends AppCompatActivity {
     private void loadGoods(){
         Type type = new TypeToken<ArrayListResponse<Goods>>() {}.getType();
 
-        String url = "http://120.24.75.92:5006/word/goods";
+        String url = GlobalInfo.host+"/word/goods";
         GsonRequest gsonRequest = new GsonRequest<ArrayListResponse<Goods>>(Request.Method.POST,url,type,new GsonRequest.PostGsonRequest<ArrayListResponse<Goods>>(){
             @Override
             public void onStart() {

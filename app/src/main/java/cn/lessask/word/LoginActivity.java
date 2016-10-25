@@ -24,6 +24,7 @@ import cn.lessask.word.model.User;
 import cn.lessask.word.model.UserInfoQQ;
 import cn.lessask.word.net.GsonRequest;
 import cn.lessask.word.net.VolleyHelper;
+import cn.lessask.word.util.GlobalInfo;
 import cn.lessask.word.util.GsonTool;
 
 public class LoginActivity extends AppCompatActivity {
@@ -119,7 +120,7 @@ public class LoginActivity extends AppCompatActivity {
         final String channel = ((MyApplication)getApplication()).getChannel();
 
         //username qq_openid, wx_openid, wb_openid, mb_18682184215
-        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/login", User.class, new GsonRequest.PostGsonRequest<User>() {
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, GlobalInfo.host+"/word/login", User.class, new GsonRequest.PostGsonRequest<User>() {
             @Override
             public void onStart() {}
             @Override
@@ -163,7 +164,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void uploadUserInfo(final User user){
-        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://120.24.75.92:5006/word/uploaduserinfo", Response.class, new GsonRequest.PostGsonRequest<Response>() {
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, GlobalInfo.host+"/word/uploaduserinfo", Response.class, new GsonRequest.PostGsonRequest<Response>() {
             @Override
             public void onStart() {}
             @Override
