@@ -112,6 +112,7 @@ public class MainActivity extends AppCompatActivity {
                     //获取需要复习的个数
                     User user=globalInfo.getUser();
                     int torevive=queryReviveSized(user.getUserid(),user.getBookid());
+                    Log.e(TAG, "torevive:"+torevive);
                     int total=torevive+revivenum;
                     toReviveProgress.setMaxValue(total);
                     toReviveProgress.setValueAnimated(0, revivenum, 1000);
@@ -416,6 +417,7 @@ public class MainActivity extends AppCompatActivity {
 
                     msg.obj=data;
                 }
+                Log.e(TAG, "maininfo sendmsg");
                 msg.what=GET_MININFO;
                 msg.obj=data;
                 handler.sendMessage(msg);
@@ -514,7 +516,7 @@ public class MainActivity extends AppCompatActivity {
         //db.execSQL("drop table t_words");
         //db.execSQL("create table t_user(userid INTEGER primary key,token text,nickname text,headimg text,gender text)");
         //db.execSQL("create table t_books(userid integer,bookid integer,completeness real,current integer)");
-        db.execSQL("create table t_words(`id` INTEGER not null,`userid` INTEGER not null,`bookid` integer not null,`word` text not null,`usphone` text default '',`ukphone` text default '',mean text default '',sentence text default '',`review` TIMESTAMP,`status` tinyint not null default 0,`sync` tinyint not null default 1,offline tinyint not null default 0)");
+        db.execSQL("create table t_words(`id` INTEGER not null,`userid` INTEGER not null,`bookid` integer not null,`word` text not null,`usphone` text default '',`ukphone` text default '',mean text default '',sentence text default '',`review` TIMESTAMP,`status` tinyint not null default 0,`step` tinyint not null default 0,`sync` tinyint not null default 1,offline tinyint not null default 0)");
         db.execSQL("create UNIQUE index iduidbid on t_words(id,userid,bookid)");
 
         Log.e(TAG, "create db end");
@@ -528,19 +530,20 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         Log.e(TAG, "onActivityResult userid:" + requestCode + "," + resultCode);
+        User user;
         if(resultCode==RESULT_OK || resultCode==RESULT_FIRST_USER) {
             switch (requestCode) {
                 case LOGIN:
-                    User user = data.getParcelableExtra("user");
+                    user = data.getParcelableExtra("user");
                     Log.e(TAG, "onActivityResult userid:" + user.getUserid() + ", nickname:" + user.getNickname()+", headimg:"+user.getHeadimg());
-
-                    afterLoadUser(user);
+                    loadUserInfo(user.getUserid(), user.getToken());
+                    //afterLoadUser(user);
                     break;
                 case LEARN_WORD:
-                    User user1=globalInfo.getUser();
+                    user=globalInfo.getUser();
                     Log.e(TAG, "learn_word");
                     if(sp.getInt("isComplete",0)==1)
-                        loadUserInfo(user1.getUserid(), user1.getToken());
+                        loadUserInfo(user.getUserid(), user.getToken());
                     else
                         handler.sendEmptyMessage(LEARN_WORD);
                     break;

@@ -144,6 +144,7 @@
             android:background="@drawable/voice"
             />
         <LinearLayout
+            android:id="@+id/know_layout"
             android:layout_below="@id/voice"
             android:layout_marginTop="16dp"
             android:layout_width="match_parent"
@@ -155,7 +156,7 @@
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="-0.5dp"
+                android:layout_marginRight="-1dp"
                 android:background="@drawable/btn_left"
                 android:text="认识"
                 />
@@ -164,41 +165,22 @@
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="-0.5dp"
+                android:layout_marginLeft="-1dp"
                 android:background="@drawable/btn_right"
                 android:text="不认识"
                 />
-
         </LinearLayout>
-        <!--
-        <View
-            android:id="@+id/nothing"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_centerHorizontal="true"
-            />
         <Button
-            android:id="@+id/know"
-            android:layout_width="wrap_content"
+            android:id="@+id/next"
+            android:layout_below="@id/voice"
+            android:layout_marginTop="16dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_alignRight="@id/nothing"
-            android:layout_alignParentLeft="true"
-            android:layout_marginRight="-0.5dp"
-            android:background="@drawable/btn_left"
-            android:text="认识"
+            android:background="@drawable/btn_bg"
+            android:textAllCaps="false"
+            android:visibility="invisible"
+            android:text="Next"
             />
-        <Button
-            android:id="@+id/unknow"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignLeft="@id/nothing"
-            android:layout_alignParentRight="true"
-            android:layout_marginLeft="-0.5dp"
-            android:background="@drawable/btn_right"
-            android:text="不认识"
-            />
-            -->
     </RelativeLayout>
-
 </RelativeLayout>
 

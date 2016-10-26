@@ -94,9 +94,10 @@ public class WordActivity extends AppCompatActivity {
     RatingBar reviveStatusRating;
     private TextView reviveWord,reviveUkPhone;
     private TextView reviveMean1,reviveMean2,reviveMean3,reviveMean4;
-    private Button reviveKnow,reviveUnknow;
+    private Button reviveKnow,reviveUnknow,reviveNext;
     private CircleProgressView reviveCircle;
     private LinearLayout reviveMeanings;
+    private LinearLayout reviveKnowLayout;
 
     private int thinkTimes = 4000;
 
@@ -878,7 +879,20 @@ public class WordActivity extends AppCompatActivity {
                 reviveCircle.invalidate();
             }
         });
+        reviveNext=(Button)wordReviveLayout.findViewById(R.id.next);
+        reviveNext.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                reviveCircle.setVisibility(View.VISIBLE);
+                reviveMeanings.setVisibility(View.INVISIBLE);
+                reviveKnowLayout.setVisibility(View.VISIBLE);
+                reviveNext.setVisibility(View.INVISIBLE);
+                showWord();
+            }
+        });
+
         reviveMeanings=(LinearLayout)wordReviveLayout.findViewById(R.id.meanings);
+        reviveKnowLayout=(LinearLayout)wordReviveLayout.findViewById(R.id.know_layout);
         reviveUkPhone = (TextView)wordReviveLayout.findViewById(R.id.ukphone);
         reviveMean1=(TextView)wordReviveLayout.findViewById(R.id.mean1);
         reviveMean2=(TextView)wordReviveLayout.findViewById(R.id.mean2);
@@ -912,6 +926,13 @@ public class WordActivity extends AppCompatActivity {
                         reviveCircle.setVisibility(View.INVISIBLE);
                         reviveMeanings.setVisibility(View.VISIBLE);
                         isReviveAnimating=false;
+                        reviveCircle.setValue(0);
+                        reviveCircle.invalidate();
+
+                        setWordStatus(user.getUserid(), currentWord, -1);
+                        reviveStatusRating.setRating(currentWord.getStatus());
+                        reviveKnowLayout.setVisibility(View.INVISIBLE);
+                        reviveNext.setVisibility(View.VISIBLE);
                     }
                     break;
             }
@@ -1017,6 +1038,9 @@ public class WordActivity extends AppCompatActivity {
     private void setWordStatus(int userid,Word word,int step){
         int id = word.getId();
         int status = word.getStatus();
+        //已经学习过的单词不会重新回到0,防止一个单词被多次当作新单词学习
+        if(status==1)
+            return;
         status+=step;
         word.setStatus(status);
         Date now = new Date();
@@ -1025,6 +1049,7 @@ public class WordActivity extends AppCompatActivity {
 
         ContentValues values = new ContentValues();
         values.put("status", status);
+        values.put("step", step);
         values.put("sync", 0);
         values.put("review", review.getTime() / 1000);
         String where = "userid=? and id=?";
@@ -1096,7 +1121,7 @@ public class WordActivity extends AppCompatActivity {
     }
 
     private void syncWords(final int userid, final int bookid){
-        String sql = "select id,status,review from t_words where userid=? and bookid=? and sync=0";
+        String sql = "select id,status,review,step from t_words where userid=? and bookid=? and sync=0";
         Cursor cursor = globalInfo.getDb(WordActivity.this).rawQuery(sql, new String[]{"" + userid, "" + bookid});
         StringBuilder builder = new StringBuilder();
         StringBuilder idsBuilder = new StringBuilder();
@@ -1105,7 +1130,7 @@ public class WordActivity extends AppCompatActivity {
             realBack();
             return;
         }
-        int status=0,newnum=0,revivenum=0;
+        int status=0,newnum=0,revivenum=0,step;
         for(int i=0;i<count;i++){
             cursor.moveToNext();
             int id = cursor.getInt(0);
@@ -1116,11 +1141,14 @@ public class WordActivity extends AppCompatActivity {
             builder.append(status);
             builder.append(",");
             builder.append(cursor.getInt(2));
+            builder.append(",");
+            step=cursor.getInt(3);
+            builder.append(step);
             if(i+1<count){
                 builder.append(";");
                 idsBuilder.append(",");
             }
-            if(status==1)
+            if(status==1 && step==1)
                 newnum++;
             if(status>1)
                 revivenum++;
