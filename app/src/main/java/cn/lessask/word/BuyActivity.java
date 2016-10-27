@@ -122,7 +122,7 @@ public class BuyActivity extends AppCompatActivity {
     private void callAliPay2(final int goodid){
 
         final LoadingDialog loadingDialog = new LoadingDialog(BuyActivity.this);
-        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://www.word.gandafu.com/buy.php", ResponseData.class, new GsonRequest.PostGsonRequest<ResponseData>() {
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, GlobalInfo.host+"/buy.php", ResponseData.class, new GsonRequest.PostGsonRequest<ResponseData>() {
             @Override
             public void onStart() {
                 loadingDialog.show();

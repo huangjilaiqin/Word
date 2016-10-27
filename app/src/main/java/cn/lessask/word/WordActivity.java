@@ -1039,7 +1039,7 @@ public class WordActivity extends AppCompatActivity {
         int id = word.getId();
         int status = word.getStatus();
         //已经学习过的单词不会重新回到0,防止一个单词被多次当作新单词学习
-        if(status==1)
+        if(status==1 && step==-1)
             return;
         status+=step;
         word.setStatus(status);
