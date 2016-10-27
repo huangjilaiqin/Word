@@ -172,57 +172,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void callAliPay2(){
-
-        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://www.word.gandafu.com/buy.php", ResponseData.class, new GsonRequest.PostGsonRequest<ResponseData>() {
-            @Override
-            public void onStart() {}
-            @Override
-            public void onResponse(ResponseData user) {
-                if(user.getError()!=null && user.getError()!="" || user.getErrno()!=0){
-                    if(user.getErrno()==601){
-                        Intent intent = new Intent(MainActivity.this, LoginActivity.class);
-                        startActivityForResult(intent, LOGIN);
-                    }else {
-                        Toast.makeText(MainActivity.this, user.getError(), Toast.LENGTH_SHORT).show();
-                    }
-                }else {
-                    Log.e(TAG, "callAliPay2:"+user.getData());
-                    final String orderInfo=user.getData();
-
-                    Runnable payRunnable = new Runnable() {
-                        @Override
-                        public void run() {
-                            PayTask alipay = new PayTask(MainActivity.this);
-                            String v = alipay.getVersion();
-                            Log.e(TAG, "version:"+v);
-                            Map<String,String> result = alipay.payV2(orderInfo,true);
-                            //alipay.h5Pay(orderInfo,true);
-
-                            Log.e(TAG, "pay cb");
-
-                        }
-                    };
-                    // 必须异步调用
-                    Thread payThread = new Thread(payRunnable);
-                    payThread.start();
-
-                }
-            }
-
-            @Override
-            public void onError(VolleyError error) {
-                Toast.makeText(MainActivity.this,  error.toString(), Toast.LENGTH_SHORT).show();
-            }
-            @Override
-            public void setPostData(Map datas) {
-                datas.put("userid",""+globalInfo.getUser().getUserid());
-                datas.put("goodid","0");
-            }
-        });
-        VolleyHelper.getInstance().addToRequestQueue(gsonRequest);
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -306,7 +255,6 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, PersionalActivity.class);
                 startActivity(intent);
-                //callAliPay2();
             }
         });
 
@@ -617,7 +565,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void buy(){
         final LoadingDialog loadingDialog = new LoadingDialog(this);
-        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, "http://www.word.gandafu.com/buy.php", ResponseData.class, new GsonRequest.PostGsonRequest<ResponseData>() {
+        GsonRequest gsonRequest = new GsonRequest<>(Request.Method.POST, GlobalInfo.host+"/buy.php", ResponseData.class, new GsonRequest.PostGsonRequest<ResponseData>() {
             @Override
             public void onStart() {
                 loadingDialog.show();
@@ -633,7 +581,7 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(MainActivity.this, user.getError(), Toast.LENGTH_SHORT).show();
                     }
                 }else {
-                    Log.e(TAG, "callAliPay2:"+user.getData());
+                    Log.e(TAG, "buy:"+user.getData());
                     final String orderInfo=user.getData();
 
                     Runnable payRunnable = new Runnable() {
