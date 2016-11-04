@@ -1038,14 +1038,23 @@ public class WordActivity extends AppCompatActivity {
     private void setWordStatus(int userid,Word word,int step){
         int id = word.getId();
         int status = word.getStatus();
-        //已经学习过的单词不会重新回到0,防止一个单词被多次当作新单词学习
-        if(status==1 && step==-1)
-            return;
-        status+=step;
-        word.setStatus(status);
         Date now = new Date();
         //review表示最近一次复习时间
         Date review = new Date(now.getTime());
+
+        //已经学习过的单词不会重新回到0,防止一个单词被多次当作新单词学习
+        if(status==1 && step==-1) {
+            //更新复习时间
+            ContentValues values = new ContentValues();
+            values.put("review", review.getTime() / 1000);
+            String where = "userid=? and id=?";
+            String[] whereArgs = new String[]{""+userid,""+word.getId()};
+            globalInfo.getDb(WordActivity.this).update("t_words", values, where, whereArgs);
+            return;
+        }
+
+        status+=step;
+        word.setStatus(status);
 
         ContentValues values = new ContentValues();
         values.put("status", status);
@@ -1056,11 +1065,6 @@ public class WordActivity extends AppCompatActivity {
         String[] whereArgs = new String[]{""+userid,""+word.getId()};
         globalInfo.getDb(WordActivity.this).update("t_words", values, where, whereArgs);
         Log.e(TAG, "setWordStatus update:" + word.getWord() + ", status:" + word.getStatus());
-
-        Cursor cursor = globalInfo.getDb(WordActivity.this).rawQuery("select status from t_words where id=?",new String[]{""+word.getId()});
-        while (cursor.moveToNext()){
-            Log.e(TAG, "new WordStatus:"+cursor.getInt(0));
-        }
     }
 
     //type: 1英式发音，2美式发音
