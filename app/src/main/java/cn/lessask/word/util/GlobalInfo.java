@@ -42,7 +42,7 @@ public class GlobalInfo {
         return user;
     }
 
-    public static String host="http://120.24.75.92";
+    public static String host="https://www.91less.com";
 
     public void setUser(User user) {
         this.user = user;
